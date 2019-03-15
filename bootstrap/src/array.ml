@@ -525,140 +525,89 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
         set_inplace t1 Uint.(i1 + i) (get t0 Uint.(i0 + len - (i + 1)))
       done
     end in
-    let merge_elm0_i ~cmp src run0 run1 dst run elm0 f = begin
-      set_inplace dst run.past elm0;
-      let run0' = {run0 with base=Uint.succ run0.base} in
-      let run' = {run with past=Uint.succ run.past} in
-      f ~cmp src run0' run1 dst run'
-    end in
-    let merge_elm1_i ~cmp src run0 run1 dst run elm1 f = begin
-      set_inplace dst run.past elm1;
-      let run1' = {run1 with base=Uint.succ run1.base} in
-      let run' = {run with past=Uint.succ run.past} in
-      f ~cmp src run0 run1' dst run'
-    end in
-    let merge_elm0_d ~cmp src run0 run1 dst run elm0 f = begin
-      set_inplace dst run.past elm0;
-      let run0' = {run0 with past=Uint.pred run0.past} in
-      let run' = {run with past=Uint.succ run.past} in
-      f ~cmp src run0' run1 dst run'
-    end in
-    let merge_elm1_d ~cmp src run0 run1 dst run elm1 f = begin
-      set_inplace dst run.past elm1;
-      let run1' = {run1 with past=Uint.pred run1.past} in
-      let run' = {run with past=Uint.succ run.past} in
-      f ~cmp src run0 run1' dst run'
-    end in
-    let merge_pair_ii ~cmp src run0 run1 dst = begin
-      let rec fn ~cmp src run0 run1 dst run = begin
+    let merge_pair_oo ~cmp src run0 order0 run1 order1 dst = begin
+      let rec fn ~cmp src run0 order0 run1 order1 dst run = begin
         match Uint.(run0.base = run0.past), Uint.(run1.base = run1.past) with
         | false, false -> begin
-            let elm0 = get src run0.base in
-            let elm1 = get src run1.base in
+            let elm0 = match order0 with
+              | Increasing -> get src run0.base
+              | Decreasing -> get src (Uint.pred run0.past)
+              | Either -> not_reached ()
+            in
+            let elm1 = match order1 with
+              | Increasing -> get src run1.base
+              | Decreasing -> get src (Uint.pred run1.past)
+              | Either -> not_reached ()
+            in
             match cmp elm0 elm1 with
             | Cmp.Lt
-            | Cmp.Eq -> merge_elm0_i ~cmp src run0 run1 dst run elm0 fn
-            | Cmp.Gt -> merge_elm1_i ~cmp src run0 run1 dst run elm1 fn
+            | Cmp.Eq -> begin
+                match order0 with
+                | Increasing -> begin
+                    set_inplace dst run.past elm0;
+                    let run0' = {run0 with base=Uint.succ run0.base} in
+                    let run' = {run with past=Uint.succ run.past} in
+                    fn ~cmp src run0' order0 run1 order1 dst run'
+                  end
+                | Decreasing -> begin
+                    set_inplace dst run.past elm0;
+                    let run0' = {run0 with past=Uint.pred run0.past} in
+                    let run' = {run with past=Uint.succ run.past} in
+                    fn ~cmp src run0' order0 run1 order1 dst run'
+                  end
+                | Either -> not_reached ()
+              end
+            | Cmp.Gt -> begin
+                match order1 with
+                | Increasing -> begin
+                    set_inplace dst run.past elm1;
+                    let run1' = {run1 with base=Uint.succ run1.base} in
+                    let run' = {run with past=Uint.succ run.past} in
+                    fn ~cmp src run0 order0 run1' order1 dst run'
+                  end
+                | Decreasing -> begin
+                    set_inplace dst run.past elm1;
+                    let run1' = {run1 with past=Uint.pred run1.past} in
+                    let run' = {run with past=Uint.succ run.past} in
+                    fn ~cmp src run0 order0 run1' order1 dst run'
+                  end
+                | Either -> not_reached ()
+              end
           end
         | true, false -> begin
             let len = Uint.(run1.past - run1.base) in
-            blit_ascending src run1.base dst run.past len;
+            let () = match order1 with
+              | Increasing -> blit_ascending src run1.base dst run.past len;
+              | Decreasing -> rblit src run1.base dst run.past len;
+              | Either -> not_reached ()
+            in
             {run with past=Uint.(run.past + len)}
           end
         | false, true -> begin
             let len = Uint.(run0.past - run0.base) in
-            blit_ascending src run0.base dst run.past len;
+            let () = match order0 with
+              | Increasing -> blit_ascending src run0.base dst run.past len;
+              | Decreasing -> rblit src run0.base dst run.past len;
+              | Either -> not_reached ()
+            in
             {run with past=Uint.(run.past + len)}
           end
         | true, true -> not_reached ()
       end in
-      fn ~cmp src run0 run1 dst {base=run0.base; past=run0.base}
+      fn ~cmp src run0 order0 run1 order1 dst {base=run0.base; past=run0.base}
     end in
-    let merge_pair_id ~cmp src run0 run1 dst = begin
-      let rec fn ~cmp src run0 run1 dst run = begin
-        match Uint.(run0.base = run0.past), Uint.(run1.base = run1.past) with
-        | false, false -> begin
-            let elm0 = get src run0.base in
-            let elm1 = get src (Uint.pred run1.past) in
-            match cmp elm0 elm1 with
-            | Cmp.Lt
-            | Cmp.Eq -> merge_elm0_i ~cmp src run0 run1 dst run elm0 fn
-            | Cmp.Gt -> merge_elm1_d ~cmp src run0 run1 dst run elm1 fn
-          end
-        | true, false -> begin
-            let len = Uint.(run1.past - run1.base) in
-            rblit src run1.base dst run.past len;
-            {run with past=Uint.(run.past + len)}
-          end
-        | false, true -> begin
-            let len = Uint.(run0.past - run0.base) in
-            blit_ascending src run0.base dst run.past len;
-            {run with past=Uint.(run.past + len)}
-          end
-        | true, true -> not_reached ()
-      end in
-      fn ~cmp src run0 run1 dst {base=run0.base; past=run0.base}
-    end in
-    let merge_pair_di ~cmp src run0 run1 dst = begin
-      let rec fn ~cmp src run0 run1 dst run = begin
-        match Uint.(run0.base = run0.past), Uint.(run1.base = run1.past) with
-        | false, false -> begin
-            let elm0 = get src (Uint.pred run0.past) in
-            let elm1 = get src run1.base in
-            match cmp elm0 elm1 with
-            | Cmp.Lt
-            | Cmp.Eq -> merge_elm0_d ~cmp src run0 run1 dst run elm0 fn
-            | Cmp.Gt -> merge_elm1_i ~cmp src run0 run1 dst run elm1 fn
-          end
-        | true, false -> begin
-            let len = Uint.(run1.past - run1.base) in
-            blit_ascending src run1.base dst run.past len;
-            {run with past=Uint.(run.past + len)}
-          end
-        | false, true -> begin
-            let len = Uint.(run0.past - run0.base) in
-            rblit src run0.base dst run.past len;
-            {run with past=Uint.(run.past + len)}
-          end
-        | true, true -> not_reached ()
-      end in
-      fn ~cmp src run0 run1 dst {base=run0.base; past=run0.base}
-    end in
-    let merge_pair_dd ~cmp src run0 run1 dst = begin
-      let rec fn ~cmp src run0 run1 dst run = begin
-        match Uint.(run0.base = run0.past), Uint.(run1.base = run1.past) with
-        | false, false -> begin
-            let elm0 = get src (Uint.pred run0.past) in
-            let elm1 = get src (Uint.pred run1.past) in
-            match cmp elm0 elm1 with
-            | Cmp.Lt
-            | Cmp.Eq -> merge_elm0_d ~cmp src run0 run1 dst run elm0 fn
-            | Cmp.Gt -> merge_elm1_d ~cmp src run0 run1 dst run elm1 fn
-          end
-        | true, false -> begin
-            let len = Uint.(run1.past - run1.base) in
-            rblit src run1.base dst run.past len;
-            {run with past=Uint.(run.past + len)}
-          end
-        | false, true -> begin
-            let len = Uint.(run0.past - run0.base) in
-            rblit src run0.base dst run.past len;
-            {run with past=Uint.(run.past + len)}
-          end
-        | true, true -> not_reached ()
-      end in
-      fn ~cmp src run0 run1 dst {base=run0.base; past=run0.base}
-    end in
-    match order0, order1 with
-    | Increasing, Increasing
-    | Increasing, Either
-    | Either, Increasing
-    | Either, Either -> merge_pair_ii ~cmp src run0 run1 dst
-    | Increasing, Decreasing -> merge_pair_id ~cmp src run0 run1 dst
-    | Decreasing, Increasing -> merge_pair_di ~cmp src run0 run1 dst
-    | Decreasing, Decreasing
-    | Decreasing, Either
-    | Either, Decreasing -> merge_pair_dd ~cmp src run0 run1 dst
+    let order0', order1' = match order0, order1 with
+      | Increasing, Increasing
+      | Increasing, Either
+      | Either, Increasing
+      | Either, Either -> Increasing, Increasing
+      | Increasing, Decreasing -> Increasing, Decreasing
+      | Decreasing, Increasing -> Decreasing, Increasing
+      | Decreasing, Decreasing
+      | Decreasing, Either
+      | Either, Decreasing -> Decreasing, Decreasing
+    in
+    merge_pair_oo ~cmp src run0 order0' run1 order1' dst
   end in
   (* Select monotonic runs and merge run pairs. *)
   let rec select ~stable ~cmp elm base i order run0_opt order0 src dst runs =
@@ -717,205 +666,14 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
     | _ -> select ~stable ~cmp (get t 0) 0 1 Either None Either t aux []
   in
 
-  let merge_pair_up ~cmp src run0 run1 dst = begin
-    let rec fn_get_elm0 ~cmp src run0 run1 dst run ~elm1 = begin
-      match Uint.(run0.base = run0.past) with
-      | false -> begin
-          let elm0 = get src run0.base in
-          let run0' = {run0 with base=Uint.succ run0.base} in
-          let run' = {run with past=Uint.succ run.past} in
-          match cmp elm0 elm1 with
-          | Cmp.Lt
-          | Cmp.Eq -> begin
-              set_inplace dst run.past elm0;
-              fn_get_elm0 ~cmp src run0' run1 dst run' ~elm1
-            end
-          | Cmp.Gt -> begin
-              set_inplace dst run.past elm1;
-              fn_get_elm1 ~cmp src run0' run1 dst run' ~elm0
-            end
-        end
-      | true -> begin
-          set_inplace dst run.past elm1;
-          let run' = {run with past=Uint.succ run.past} in
-          let len = Uint.(run1.past - run1.base) in
-          match Uint.(len = 0) with
-          | true -> run'
-          | false -> begin
-              blit_ascending src run1.base dst run'.past len;
-              {run' with past=Uint.(run'.past + len)}
-            end
-        end
-    end
-    and fn_get_elm1 ~cmp src run0 run1 dst run ~elm0 = begin
-      match Uint.(run1.base = run1.past) with
-      | false -> begin
-          let elm1 = get src run1.base in
-          let run1' = {run1 with base=Uint.succ run1.base} in
-          let run' = {run with past=Uint.succ run.past} in
-          match cmp elm0 elm1 with
-          | Cmp.Lt
-          | Cmp.Eq -> begin
-              set_inplace dst run.past elm0;
-              fn_get_elm0 ~cmp src run0 run1' dst run' ~elm1
-          end
-          | Cmp.Gt -> begin
-              set_inplace dst run.past elm1;
-              fn_get_elm1 ~cmp src run0 run1' dst run' ~elm0
-            end
-        end
-      | true -> begin
-          set_inplace dst run.past elm0;
-          let run' = {run with past=Uint.succ run.past} in
-          let len = Uint.(run0.past - run0.base) in
-          match Uint.(len = 0) with
-          | true -> run'
-          | false -> begin
-              blit_ascending src run0.base dst run'.past len;
-              {run' with past=Uint.(run'.past + len)}
-            end
-        end
-    end in
-    let run = {base=run0.base; past=run0.base} in
-    match Uint.(run0.base = run0.past), Uint.(run1.base = run1.past) with
-    | false, false -> begin
-        let elm0 = get src run0.base in
-        let run0' = {run0 with base=Uint.succ run0.base} in
-        let elm1 = get src run1.base in
-        let run1' = {run1 with base=Uint.succ run1.base} in
-        let run' = {run with past=Uint.succ run.past} in
-        match cmp elm0 elm1 with
-        | Cmp.Lt
-        | Cmp.Eq -> begin
-            set_inplace dst run.past elm0;
-            fn_get_elm0 ~cmp src run0' run1' dst run' ~elm1
-          end
-        | Cmp.Gt -> begin
-            set_inplace dst run.past elm1;
-            fn_get_elm1 ~cmp src run0' run1' dst run' ~elm0
-          end
-      end
-    | true, false -> begin
-        let len = Uint.(run1.past - run1.base) in
-        blit_ascending src run1.base dst run.past len;
-        {run with past=Uint.(run.past + len)}
-      end
-    | false, true -> begin
-        let len = Uint.(run0.past - run0.base) in
-        blit_ascending src run0.base dst run.past len;
-        {run with past=Uint.(run.past + len)}
-      end
-    | true, true -> not_reached ()
-  end in
-  let merge_pair_down ~cmp src run0 run1 dst = begin
-    let rec fn_get_elm0 ~cmp src run0 run1 dst run ~elm1 = begin
-      match Uint.(run0.base = run0.past) with
-      | false -> begin
-          let i0 = Uint.pred run0.past in
-          let elm0 = get src i0 in
-          let run0' = {run0 with past=i0} in
-          let run' = {run with base=Uint.pred run.base} in
-          match cmp elm0 elm1 with
-          | Cmp.Lt
-          | Cmp.Eq -> begin
-              set_inplace dst run'.base elm1;
-              fn_get_elm1 ~cmp src run0' run1 dst run' ~elm0
-            end
-          | Cmp.Gt -> begin
-              set_inplace dst run'.base elm0;
-              fn_get_elm0 ~cmp src run0' run1 dst run' ~elm1
-            end
-        end
-      | true -> begin
-          let run' = {run with base=Uint.pred run.base} in
-          set_inplace dst run'.base elm1;
-          let len = Uint.(run1.past - run1.base) in
-          match Uint.(len = 0) with
-          | true -> run'
-          | false -> begin
-              let run'' = {run' with base=Uint.(run'.base - len)} in
-              blit_descending src run1.base dst run''.base len;
-              run''
-            end
-        end
-    end
-    and fn_get_elm1 ~cmp src run0 run1 dst run ~elm0 = begin
-      match Uint.(run1.base = run1.past) with
-      | false -> begin
-          let i1 = Uint.pred run1.past in
-          let elm1 = get src i1 in
-          let run1' = {run1 with past=i1} in
-          let run' = {run with base=Uint.pred run.base} in
-          match cmp elm0 elm1 with
-          | Cmp.Lt
-          | Cmp.Eq -> begin
-              set_inplace dst run'.base elm1;
-              fn_get_elm1 ~cmp src run0 run1' dst run' ~elm0
-            end
-          | Cmp.Gt -> begin
-              set_inplace dst run'.base elm0;
-              fn_get_elm0 ~cmp src run0 run1' dst run' ~elm1
-            end
-        end
-      | true -> begin
-          let run' = {run with base=Uint.pred run.base} in
-          set_inplace dst run'.base elm0;
-          let len = Uint.(run0.past - run0.base) in
-          match Uint.(len = 0) with
-          | true -> run'
-          | false -> begin
-              let run'' = {run' with base=Uint.(run'.base - len)} in
-              blit_descending src run0.base dst run''.base len;
-              run''
-            end
-        end
-    end in
-    let run = {base=run1.past; past=run1.past} in
-    match Uint.(run0.base = run0.past), Uint.(run1.base = run1.past) with
-    | false, false -> begin
-        let i0 = Uint.pred run0.past in
-        let elm0 = get src i0 in
-        let run0' = {run0 with past=i0} in
-        let i1 = Uint.pred run1.past in
-        let elm1 = get src i1 in
-        let run1' = {run1 with past=i1} in
-        let run' = {run with base=Uint.pred run.base} in
-        match cmp elm0 elm1 with
-        | Cmp.Lt
-        | Cmp.Eq -> begin
-            set_inplace dst run'.base elm1;
-            fn_get_elm1 ~cmp src run0' run1' dst run' ~elm0
-          end
-        | Cmp.Gt -> begin
-            set_inplace dst run'.base elm0;
-            fn_get_elm0 ~cmp src run0' run1' dst run' ~elm1
-          end
-      end
-    | true, false -> begin
-        let len = Uint.(run1.past - run1.base) in
-        let run' = {run with base=Uint.(run.base - len)} in
-        blit_descending src run1.base dst run'.base len;
-        run'
-      end
-    | false, true -> begin
-        let len = Uint.(run0.past - run0.base) in
-        let run' = {run with base=Uint.(run.base - len)} in
-        blit_descending src run0.base dst run'.base len;
-        run'
-      end
-    | true, true -> not_reached ()
-  end in
   (* Repeatedly sweep through runs and merge pairs until only one run remains.
    * Take care to read/write linearly up/down based on the sweep direction, in
    * order to improve cache locality. *)
   let rec merge ~cmp ~inplace src to_merge up dst merged = begin
     match to_merge, up, merged with
-    | run0 :: run1 :: to_merge', true, _ -> begin
-        let run = merge_pair_up ~cmp src run0 run1 dst in
-        merge ~cmp ~inplace src to_merge' up dst (run :: merged)
-      end
+    | run0 :: run1 :: to_merge', true, _
     | run1 :: run0 :: to_merge', false, _ -> begin
-        let run = merge_pair_down ~cmp src run0 run1 dst in
+        let run = merge_pair ~cmp src run0 Increasing run1 Increasing dst in
         merge ~cmp ~inplace src to_merge' up dst (run :: merged)
       end
     | [], _, _ :: _ :: _ -> begin
