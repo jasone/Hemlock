@@ -515,6 +515,9 @@ type run = {
   base: uint;
   past: uint;
 }
+(*
+let sort_impl ?(min_run=8) ?(stable=false) t ~cmp ~inplace =
+   *)
 let sort_impl ?(stable=false) t ~cmp ~inplace =
   (* Merge a pair of adjacent runs.  Input runs may be in increasing or
    * decreasing order; the output is always in increasing order. *)
@@ -661,7 +664,7 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
     | Either, Decreasing -> merge_pair_dd src run0 run1 dst
   end in
   (* Select monotonic runs and merge run pairs. *)
-  let rec select elm base i order run0_opt order0 src dst runs = begin
+  let rec select elm base i order run0_opt order0 src dst runs ~cmp = begin
     match Uint.(i = (length t)) with
     | true -> begin
         let run0, order0, run1, order1 = match run0_opt with
@@ -681,34 +684,90 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
         let i' = Uint.succ i in
         match cmp elm elm', order, stable with
         | Cmp.Lt, Either, _ ->
-          select elm' base i' Increasing run0_opt order0 src dst runs
+          select elm' base i' Increasing run0_opt order0 src dst runs ~cmp
         | Cmp.Gt, Either, _ ->
-          select elm' base i' Decreasing run0_opt order0 src dst runs
+          select elm' base i' Decreasing run0_opt order0 src dst runs ~cmp
         | Cmp.Lt, Increasing, _
         | Cmp.Eq, Increasing, true
         | Cmp.Eq, Either, true ->
-          select elm' base i' Increasing run0_opt order0 src dst runs
+          select elm' base i' Increasing run0_opt order0 src dst runs ~cmp
         | Cmp.Eq, _, false
         | Cmp.Gt, Decreasing, _ ->
-          select elm' base i' order run0_opt order0 src dst runs
+          select elm' base i' order run0_opt order0 src dst runs ~cmp
         | Cmp.Lt, Decreasing, _
         | Cmp.Eq, Decreasing, true
-        | Cmp.Gt, Increasing, _ ->
-          let run0_opt', order0', runs' = match run0_opt with
-            | None -> Some {base; past=i}, order, runs
-            | Some run0 -> begin
-                let run1 = {base; past=i} in
-                let run = merge_pair src run0 order0 run1 order dst in
-                None, Either, (run :: runs)
+        | Cmp.Gt, Increasing, _ -> begin
+            (*
+            let run_len = Uint.(i - base) in
+            match Uint.(run_len < min_run) && Uint.(((length t) - i) > 1) with
+            | true -> begin
+                (* The natural run is below the min_run threshold, so expand it
+                 * and use selection sort to create an Increasing run. *)
+                let rec min arr elm0 i0 base past ~cmp = begin
+                  match Uint.(base = past) with
+                  | true -> i0
+                  | false -> begin
+                      let i1 = base in
+                      let elm1 = get arr i1 in
+                      let elm0', i0' = match cmp elm0 elm1 with
+                        | Cmp.Lt
+                        | Cmp.Eq -> elm0, i0
+                        | Cmp.Gt -> elm1, i1
+                      in
+                      let base' = Uint.succ base in
+                      min arr elm0' i0' base' past ~cmp
+                    end
+                end in
+                let selection_sort arr base past ~cmp = begin
+                  let rec fn arr elm0 i0 base past = begin
+                    match Uint.(base = past) with
+                    | true -> elm0
+                    | false -> begin
+                        let i1 = min arr elm0 i0 base past ~cmp in
+                        if Uint.(i0 <> i1) then swap_inplace arr i0 i1;
+                        let i0' = base in
+                        let elm0' = get src i0' in
+                        let base' = Uint.succ base in
+                        fn arr elm0' i0' base' past
+                      end
+                  end in
+                  assert Uint.(base < past);
+                  let i0 = base in
+                  let elm0 = get src i0 in
+                  let base' = Uint.succ base in
+                  fn arr elm0 i0 base' past
+                end in
+                (* Take care to leave at least one element past the end of the
+                 * run. *)
+                let i'' = match Uint.(base + min_run >= (length t)) with
+                  | true -> Uint.pred (length t)
+                  | false -> Uint.(base + min_run)
+                in
+                let elm'' = selection_sort src base i'' ~cmp in
+                select elm'' base i'' Increasing run0_opt order0 src dst runs
+                  ~cmp
               end
-          in
-          select elm' i i' Either run0_opt' order0' src dst runs'
+            | false -> begin
+               *)
+                let run0_opt', order0', runs' = match run0_opt with
+                  | None -> Some {base; past=i}, order, runs
+                  | Some run0 -> begin
+                      let run1 = {base; past=i} in
+                      let run = merge_pair src run0 order0 run1 order dst in
+                      None, Either, (run :: runs)
+                    end
+                in
+                select elm' i i' Either run0_opt' order0' src dst runs' ~cmp
+                  (*
+              end
+*)
+          end
       end
   end in
   let aux = copy t in
   let runs = match length t with
     | 0 -> [{base=0; past=0}]
-    | _ -> select (get t 0) 0 1 Either None Either t aux []
+    | _ -> select (get t 0) 0 1 Either None Either t aux [] ~cmp
   in
 
   let merge_pair_up src run0 run1 dst = begin
@@ -1690,20 +1749,69 @@ let%expect_test "sort" =
   let cmp elm0 elm1 =
     Uint.cmp elm0.key elm1.key
   in
+  (*
+  let open Printf in
+  let print_sort_elm_array arr = begin
+    printf "[|";
+    iteri arr ~f:(fun i elm ->
+      if Uint.(i > 0) then printf "; ";
+      printf "(%u,%u)" elm.key elm.sn
+    );
+    printf "|]"
+  end in
+     *)
   let test_sort arr = begin
+    (*
+    print_sort_elm_array arr;
+    printf "\n";
+       *)
+    let ocaml = false in
+    let compare elm0 elm1 = begin
+      match cmp elm0 elm1 with
+      | Lt -> -1
+      | Eq -> 0
+      | Gt -> 1
+    end in
+    let arr' = match ocaml with
+      | true -> begin
+          let arr' = Stdlib.Array.copy arr in
+          Stdlib.Array.sort compare arr';
+          arr'
+        end
+      | false -> sort arr ~cmp
+    in
+    (*
     let arr' = sort arr ~cmp in
+       *)
     assert (is_sorted arr' ~cmp);
-
+(*
+    let arr' = match ocaml with
+      | true -> begin
+          let arr' = Stdlib.Array.copy arr in
+          Stdlib.Array.stable_sort compare arr';
+          arr'
+        end
+      | false -> sort ~stable:true arr ~cmp
+    in
+(*
     let arr' = sort ~stable:true arr ~cmp in
+   *)
     assert (is_sorted ~strict:true arr' ~cmp:(fun elm0 elm1 ->
       match cmp elm0 elm1 with
       | Cmp.Lt -> Cmp.Lt
       | Cmp.Eq -> Uint.cmp elm0.sn elm1.sn
       | Cmp.Gt -> Cmp.Gt
     ));
+   *)
   end in
   Stdlib.Random.init 0;
+  for len = 1000 to 2000 do
+    (*
+  for len = 0 to 1200 do
+       *)
+    (*
   for len = 0 to 257 do
+       *)
     for _ = 1 to 10 do
       test_sort (gen_array len)
     done
