@@ -1454,84 +1454,20 @@ let%expect_test "sort" =
   let cmp elm0 elm1 =
     Uint.cmp elm0.key elm1.key
   in
-  (*
-  let open Printf in
-  let print_sort_elm_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > 0) then printf "; ";
-      printf "(%u,%u)" elm.key elm.sn
-    );
-    printf "|]"
-  end in
-     *)
   let test_sort arr = begin
-    (*
-    print_sort_elm_array arr;
-    printf "\n";
-       *)
-    let ocaml = false in
-    let compare elm0 elm1 = begin
-      match cmp elm0 elm1 with
-      | Lt -> -1
-      | Eq -> 0
-      | Gt -> 1
-    end in
-    let arr' = match ocaml with
-      | true -> begin
-          let arr' = Stdlib.Array.copy arr in
-          Stdlib.Array.sort compare arr';
-          for _ = 1 to 4 do
-            Stdlib.Array.sort compare arr';
-          done;
-          arr'
-        end
-      | false -> let arr' = sort arr ~cmp in
-        for _ = 1 to 4 do
-          sort_inplace arr' ~cmp;
-        done;
-        arr'
-    in
-    (*
     let arr' = sort arr ~cmp in
-       *)
     assert (is_sorted arr' ~cmp);
 
-    let arr' = match ocaml with
-      | true -> begin
-          let arr' = Stdlib.Array.copy arr in
-          Stdlib.Array.stable_sort compare arr';
-          for _ = 1 to 4 do
-            Stdlib.Array.stable_sort compare arr';
-          done;
-          arr'
-        end
-      | false ->
-        let arr' = sort ~stable:true arr ~cmp in
-        for _ = 1 to 4 do
-          sort_inplace ~stable:true arr ~cmp;
-        done;
-        arr'
-    in
-(*
     let arr' = sort ~stable:true arr ~cmp in
-   *)
     assert (is_sorted ~strict:true arr' ~cmp:(fun elm0 elm1 ->
       match cmp elm0 elm1 with
       | Cmp.Lt -> Cmp.Lt
       | Cmp.Eq -> Uint.cmp elm0.sn elm1.sn
       | Cmp.Gt -> Cmp.Gt
     ));
-
   end in
   Stdlib.Random.init 0;
-  for len = 0 to 1200 do
-    (*
-  for len = 0 to 1200 do
-       *)
-    (*
   for len = 0 to 257 do
-       *)
     for _ = 1 to 10 do
       test_sort (gen_array len)
     done
