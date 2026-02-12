@@ -892,8 +892,8 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
                     let workq' = Workq.push_back index workq in
                     io, isocores', workq'
                   end
-                | Some merge_index -> begin
-                    match Isocores.merge symbols gotonub merge_index isocores with
+                | Some (merge_index, compat) -> begin
+                    match Isocores.merge symbols gotonub merge_index compat isocores with
                     | false, _ -> io, isocores, workq
                     | true, isocores' -> begin
                         let io = io.log |> Fmt.fmt "." |> Io.with_log io in

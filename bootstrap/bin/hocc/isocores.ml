@@ -10,7 +10,7 @@ type v = {
 }
 
 type t = {
-  compat: GotoNub.t -> StateNub.t -> bool;
+  compat: GotoNub.t -> StateNub.t -> Compat.t;
   isocores: (Lr0Itemset.t, v, Lr0Itemset.cmper_witness) Map.t;
   statenubs_map: (StateNub.Index.t, StateNub.t, StateNub.Index.cmper_witness) Ordmap.t;
 }
@@ -46,13 +46,14 @@ let get gotonub {compat; isocores; statenubs_map} =
       Ordset.fold_until ~init:None ~f:(fun _ statenub_index ->
         let statenub = Ordmap.get_hlt statenub_index statenubs_map in
         match compat gotonub statenub with
-        | false -> None, false
-        | true -> Some statenub_index, true
+        | Compat.Incompat -> None, false
+        | compat -> Some (statenub_index, compat), true
       ) isocore_set
     end
 
 let get_hlt gotonub t =
-  Option.value_hlt (get gotonub t)
+  match Option.value_hlt (get gotonub t) with
+  | statenub, _compat -> statenub
 
 let get_isocore_set_hlt core {isocores; _} =
   let {isocore_set; _} = Map.get_hlt core isocores in
@@ -100,10 +101,14 @@ let insert symbols (GotoNub.{isocores_sn_opt; _} as gotonub) ({isocores; statenu
       statenub_index, {t with isocores=isocores'; statenubs_map=statenubs_map'}
     end
 
-let merge symbols gotonub merge_index ({statenubs_map; _} as t) =
+let merge symbols gotonub merge_index compat ({statenubs_map; _} as t) =
   (* Merge into existing LR(1) item set closure. *)
   let merge_statenub = Ordmap.get_hlt merge_index statenubs_map in
-  let merged, merge_statenub' = StateNub.merge symbols gotonub merge_statenub in
+  let merged, merge_statenub' = match compat with
+    | Compat.Incompat -> not_reached ()
+    | Compat.Compat -> StateNub.merge symbols gotonub merge_statenub
+    | Compat.Equal -> false, merge_statenub
+  in
   match merged with
   | false -> false, t
   | true -> begin

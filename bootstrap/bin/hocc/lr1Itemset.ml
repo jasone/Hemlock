@@ -199,13 +199,15 @@ let is_accept t =
 
 let compat_lr1 ({core=c0; _} as t0) ({core=c1; _} as t1) =
   assert Lr0Itemset.(c0 = c1);
-  t0 = t1
+  match t0 = t1 with
+  | false -> Compat.Incompat
+  | true -> Equal
 
 let compat_pgm1 ({core=c0; _} as t0) ({core=c1; _} as t1) =
   let rec f o_seq t_seq = begin
     let rec compat_weak_follow_inner o_seq t_seq o_follow t_follow = begin
       match Seq.next_opt o_seq, Seq.next_opt t_seq with
-      | None, None -> true
+      | None, None -> Compat.Compat
       | Some (Lr1Item.{follow=o_follow'; _}, o_seq'), Some (Lr1Item.{follow=t_follow'; _}, t_seq')
         -> begin
             (* Require weakly compatible follow sets for all follow set pairings, as defined by the
@@ -216,21 +218,26 @@ let compat_pgm1 ({core=c0; _} as t0) ({core=c1; _} as t1) =
               (Bitset.subset (Bitset.union o_follow t_follow') (Bitset.inter t_follow o_follow'))
             with
             | true, true -> compat_weak_follow_inner o_seq' t_seq' o_follow t_follow
-            | _ -> false
+            | _ -> Compat.Incompat
           end
       | None, Some _
       | Some _, None -> not_reached ()
     end in
     match Seq.next_opt o_seq, Seq.next_opt t_seq with
-    | None, None -> true
+    | None, None -> Compat.Compat
     | Some (Lr1Item.{follow=o_follow; _}, o_seq'), Some (Lr1Item.{follow=t_follow; _}, t_seq') ->
-      compat_weak_follow_inner o_seq' t_seq' o_follow t_follow && f o_seq' t_seq'
+      begin
+        match compat_weak_follow_inner o_seq' t_seq' o_follow t_follow with
+        | Compat.Incompat -> Compat.Incompat
+        | Compat -> f o_seq' t_seq'
+        | Equal -> not_reached ()
+      end
     | None, Some _
     | Some _, None -> not_reached ()
   end in
   assert Lr0Itemset.(c0 = c1);
   match Uns.(=) (length t0) (length t1) with
-  | false -> false
+  | false -> Compat.Incompat
   | true -> begin
       let o_seq = Seq.init t0 in
       let t_seq = Seq.init t1 in
@@ -239,4 +246,4 @@ let compat_pgm1 ({core=c0; _} as t0) ({core=c1; _} as t1) =
 
 let compat_lalr1 {core=c0; _} {core=c1; _} =
   assert Lr0Itemset.(c0 = c1);
-  true
+  Compat.Compat

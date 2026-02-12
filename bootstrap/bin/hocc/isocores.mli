@@ -11,7 +11,7 @@ open! Basis.Rudiments
 
 type t
 
-val init: compat:(GotoNub.t -> StateNub.t -> bool) -> t
+val init: compat:(GotoNub.t -> StateNub.t -> Compat.t) -> t
 (** [init ~compat] creates an empty isocores collection for which LR(1) item set compatibility is
     determined by the [compat] function. *)
 
@@ -21,9 +21,9 @@ val mem: Lr0Itemset.t -> t -> bool
 val mems: Lr0Itemset.t -> t -> (StateNub.Index.t, StateNub.Index.cmper_witness) Ordset.t
 (** [mems core t] returns the isocore set corresponding to the specificed [core]. *)
 
-val get: GotoNub.t -> t -> StateNub.Index.t option
-(** [get gotonub t] returns the state nub in [t] that is compatible with [gotonub], or [None] if no
-    such state nub exists. *)
+val get: GotoNub.t -> t -> (StateNub.Index.t * Compat.t) option
+(** [get gotonub t] returns the state nub in [t] that is compatible with [gotonub] as well as its
+    specific compatibility ([Compat]/[Equal]), or [None] if no such state nub exists. *)
 
 val get_hlt: GotoNub.t -> t -> StateNub.Index.t
 (** [get gotonub t] returns the state nub in [t] that is compatible with [gotonub], or halts if no
@@ -44,10 +44,11 @@ val insert: Symbols.t -> GotoNub.t -> t -> StateNub.Index.t * t
     result establishes a new isocore set, the isocore set's sequence number is automatically
     assigned unless [GotoNub] carries an isocore set sequence number. *)
 
-val merge: Symbols.t -> GotoNub.t -> StateNub.Index.t -> t -> bool * t
-(** [merge symbols gotonub statenub_index t] merges [gotonub] into the state nub with given
-    [statenub_index]. If the resulting state nub is distinct from the input, true is returned along
-    with a derivative of [t] containing the resulting state nub; [false, t] otherwise. *)
+val merge: Symbols.t -> GotoNub.t -> StateNub.Index.t -> Compat.t -> t -> bool * t
+(** [merge symbols gotonub statenub_index compat t] merges [gotonub] into the state nub with given
+    [statenub_index] and [compat] relative to the state nub. If the resulting state nub is distinct
+    from the input, true is returned along with a derivative of [t] containing the resulting state
+    nub; [false, t] otherwise. *)
 
 val remove_hlt: StateNub.Index.t -> t -> t
 (** [remove_hlt statenub_index t] removes the state nub with given [statenub_index]. *)

@@ -94,15 +94,15 @@ val is_accept: t -> bool
 (** [is_accept t] returns true iff [t] contains only LR(1) items which are compatible with an accept
     state. *)
 
-val compat_lr1: t -> t -> bool
+val compat_lr1: t -> t -> Compat.t
 (** [compat_lr1 t0 t1] determines if isocores [t0] and [t1] are identical, which is the basis
     of the canonical LR(1) algorithm. *)
 
-val compat_pgm1: t -> t -> bool
+val compat_pgm1: t -> t -> Compat.t
 (** [compat_pgm1 t0 t1] determines if isocores [t0] and [t1] are weakly compatible, as defined by
     the Pager(1977) algorithm, and as refined by Menhir to prevent phantom conflicts accompanying
     actual conflicts. This is the basis of the PGM(1) algorithm. *)
 
-val compat_lalr1: t -> t -> bool
+val compat_lalr1: t -> t -> Compat.t
 (** [compat_lalr t0 t1] determines if isocore [t0] has the same LR(0) kernel as [t1], which is the
     basis of the LALR(1) algorithm. This is trivially true for all isocores. *)
