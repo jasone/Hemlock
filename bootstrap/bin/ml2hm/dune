@@ -1,0 +1,7 @@
+(executables
+ (names ml2hm)
+ (libraries Basis Hmc Ml2Hm))
+
+(install
+ (section bin)
+  (files (ml2hm.exe as ml2hm)))

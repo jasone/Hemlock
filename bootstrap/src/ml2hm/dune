@@ -1,6 +1,6 @@
 (library
- (name Mlc)
- (public_name Hemlock.Mlc)
+ (name Ml2Hm)
+ (public_name Hemlock.Ml2Hm)
  (libraries Basis Hmc)
  (synopsis "OCaml bootstrap transpiler library")
  )

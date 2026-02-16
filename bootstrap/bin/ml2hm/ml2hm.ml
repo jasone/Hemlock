@@ -1,6 +1,6 @@
 open Basis
 include Basis.Rudiments
-open Mlc
+open Ml2Hm
 
 let scan_file path =
   let rec fn scanner = begin
@@ -33,7 +33,7 @@ let scan_file path =
 
 let _ =
   match Array.length Os.argv with
-  | 0L | 1L -> halt "mlc usage: mlc <path>"
+  | 0L | 1L -> halt "ml2hm usage: ml2hm <path>"
   | _ -> begin
       let path = Path.of_bytes (Bytes.Slice.init (Array.get 1L Os.argv)) in
       scan_file path

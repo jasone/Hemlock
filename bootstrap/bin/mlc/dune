@@ -1,7 +1,0 @@
-(executables
- (names mlc)
- (libraries Basis Hmc Mlc))
-
-(install
- (section bin)
-  (files (mlc.exe as mlc)))
