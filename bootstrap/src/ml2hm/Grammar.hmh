@@ -117,6 +117,16 @@ include hocc
     token LONG
     token END_OF_INPUT
 
+    nonterm PrefixOp ::=
+      | TILDE_OP
+      | QMARK_OP
+
+    nonterm InfixOp2 ::=
+      | MINUS_OP
+      | "-"
+      | PLUS_OP
+      | "+"
+
     nonterm XXX ::= epsilon
 
     nonterm SingleAttrId ::=
@@ -218,11 +228,44 @@ include hocc
     nonterm ModuleExpr ::=
       | XXX
 
-    nonterm MtyLongident ::=
-      | XXX
+    nonterm TypeVariance ::=
+      | PrefixOp
+      | InfixOp2
+      | "+"
+      | "-"
+      | "+" "!"
+      | "!" "+"
+      | "-" "!"
+      | "!" "-"
+      | epsilon
+
+    nonterm TypeVariable ::=
+      | "'" Ident
+      | "_"
+
+    nonterm TypeParameter ::=
+      | TypeVariance TypeVariable
+
+    nonterm ReversedSeparatedNonemptyLlistCommaTypeParameter ::=
+      | ReversedSeparatedNonemptyLlistCommaTypeParameter "," TypeParameter
+      | TypeParameter
+
+    nonterm TypeParameters ::=
+      | "(" ReversedSeparatedNonemptyLlistCommaTypeParameter ")"
+      | TypeParameter
+      | epsilon
+
+    nonterm WithTypeBinder ::=
+      | "="
+      | "=" "private"
 
     nonterm WithConstraint ::=
-      | XXX
+      | "type" TypeParameters LabelLongident WithTypeBinder AliasType
+      | "type" TypeParameters LabelLongident ":=" AliasType
+      | "module" ModLongident "=" ModExtLongident
+      | "module" ModLongident ":=" ModExtLongident
+      | "module" "type" MtyLongident "=" ModuleType
+      | "module" "type" MtyLongident ":=" ModuleType
 
     nonterm ReversedSeparatedNonemptyLlistAndWithConstraint ::=
       | ReversedSeparatedNonemptyLlistAndWithConstraint "and" WithConstraint
@@ -246,9 +289,21 @@ include hocc
       | ModExtLongident "(" ModExtLongident ")"
       | LongidentModExtLongidentCident
 
+    nonterm MtyLongident ::=
+      | ModExtLongident "." Ident
+      | Ident
+
+    nonterm LabelLongident ::=
+      | ModLongident "." UIDENT
+      | UIDENT
+
     nonterm TypeLongident ::=
       | ModExtLongident "." UIDENT
       | UIDENT
+
+    nonterm ModLongident ::=
+      | ModLongident "." CIDENT
+      | CIDENT
 
     nonterm ReversedSeparatedNonemptyLlistCommaCoreType ::=
       | ReversedSeparatedNonemptyLlistCommaCoreType "," CoreType
