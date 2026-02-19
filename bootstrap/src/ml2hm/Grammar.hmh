@@ -67,6 +67,7 @@ include hocc
     token QMARK "?"
     token STAR "*"
     token PLUS "+"
+    token PLUS_EQ "+="
     token MINUS "-"
     token LT "<"
     token LT_EQ "<="
@@ -88,8 +89,6 @@ include hocc
     token LCURLY "{"
     token RCURLY "}"
     token BAR "|"
-    token LCAPTURE "(|"
-    token RCAPTURE "|)"
     token LARRAY "[|"
     token RARRAY "|]"
     token BSLASH "\\"
@@ -114,6 +113,7 @@ include hocc
     token CODEPOINT
     token QSTRING
     token ISTRING
+    token R64
     token LONG
     token END_OF_INPUT
 
@@ -128,6 +128,19 @@ include hocc
       | "+"
 
     nonterm XXX ::= epsilon
+
+    nonterm Constant ::=
+      | LONG
+      | CODEPOINT
+      | ISTRING
+      | R64
+
+    nonterm SignedConstant ::=
+      | Constant
+      | "-" LONG
+      | "-" R64
+      | "+" LONG
+      | "+" R64
 
     nonterm SingleAttrId ::=
       | UIDENT
@@ -193,6 +206,18 @@ include hocc
       | "&&"
       | ":="
 
+    nonterm OptionSemi ::=
+      | ";"
+      | epsilon
+
+    nonterm OptionPrecededColonCoreType ::=
+      | ":" CoreType
+      | epsilon
+
+    nonterm OptionPrecededEqualPattern ::=
+      | "=" Pattern
+      | epsilon
+
     nonterm ListAttribute ::=
       | Attribute ListAttribute
       | epsilon
@@ -212,21 +237,99 @@ include hocc
       | UIDENT
       | ValExtraIdent
 
-    nonterm SeqExpr ::=
+    nonterm Expr ::=
       | XXX
+
+    nonterm SeqExpr ::=
+      | Expr ";" SeqExpr
+      | Expr ";"
+      | Expr
+
+    nonterm PatternCommaListPattern ::=
+      | PatternCommaListPattern "," Pattern
+      | Pattern "," Pattern
+
+    nonterm ListxSemiRecordPatFieldUnderscore ::=
+      | LabelLongident OptionPrecededColonCoreType OptionPrecededEqualPattern ";"
+      ListxSemiRecordPatFieldUnderscore
+      | LabelLongident OptionPrecededColonCoreType OptionPrecededEqualPattern ";" "_" OptionSemi
+      | LabelLongident OptionPrecededColonCoreType OptionPrecededEqualPattern ";"
+      | LabelLongident OptionPrecededColonCoreType OptionPrecededEqualPattern
+
+    nonterm SeparatedOrTerminatedNonemptyListSemiPattern ::=
+      | Pattern ";" SeparatedOrTerminatedNonemptyListSemiPattern
+      | Pattern ";"
+      | Pattern
+
+    nonterm SimpleDelimitedPattern ::=
+      | "{" ListxSemiRecordPatFieldUnderscore "}"
+      | "[" SeparatedOrTerminatedNonemptyListSemiPattern "]"
+      | "[|" SeparatedOrTerminatedNonemptyListSemiPattern "|]"
+      | "[|" "|]"
+
+    nonterm SimplePatternNotIdent ::=
+      | ModLongident "." "(" Pattern ")"
+      | ModLongident "." "(" ")"
+      | ModLongident "." "[" "]"
+      | ModLongident "." SimpleDelimitedPattern
+      | ConstrLongident
+      | "(" "module" ListAttribute ModuleName ":" ModuleType ")"
+      | "(" "module" ListAttribute ModuleName ")"
+      | "(" Pattern ":" CoreType ")"
+      | "(" Pattern ")"
+      | SimpleDelimitedPattern
+      | SignedConstant ".." SignedConstant
+      | SignedConstant
+      | "_"
+
+    nonterm SimplePattern ::=
+      | SimplePatternNotIdent
+      | ValIdent
+
+    nonterm NonemptyListMkrhsLident ::=
+      | UIDENT NonemptyListMkrhsLident
+      | UIDENT
+
+    nonterm PatternGen ::=
+      | "lazy" ListAttribute SimplePattern
+      | ConstrLongident "(" "type" NonemptyListMkrhsLident ")" SimplePattern
+      | ConstrLongident Pattern
+      | SimplePattern
 
     nonterm Pattern ::=
-      | XXX
+      | Pattern "|" Pattern
+      | PatternCommaListPattern
+      | Pattern "as" ValIdent
+      | PatternGen
+      | Pattern Attribute
+      | Pattern "::" Pattern
+
+    nonterm ModuleName ::=
+      | CIDENT
+      | "_"
 
     nonterm FunctorArg ::=
-      | XXX
+      | "(" ModuleName ":" ModuleType ")"
+      | "(" ")"
 
     nonterm ReversedNonemptyLlistFunctorArg ::=
       | ReversedNonemptyLlistFunctorArg FunctorArg
       | FunctorArg
 
+    nonterm ParenModuleExpr ::=
+      | "(" ModuleExpr ":" ModuleType ")"
+      | "(" ModuleExpr ")"
+      | "(" "val" ListAttribute Expr ")"
+      | "(" "val" ListAttribute Expr ":" ModuleType ")"
+
     nonterm ModuleExpr ::=
-      | XXX
+      | "struct" ListAttribute Structure "end"
+      | "functor" ListAttribute ReversedNonemptyLlistFunctorArg "->" ModuleExpr
+      | ParenModuleExpr
+      | ModuleExpr Attribute
+      | ModLongident
+      | ModuleExpr ParenModuleExpr
+      | ModuleExpr "(" ")"
 
     nonterm TypeVariance ::=
       | PrefixOp
@@ -305,6 +408,22 @@ include hocc
       | ModLongident "." CIDENT
       | CIDENT
 
+    nonterm ConstrExtraNonprefixIdent ::=
+      | "[" "]"
+      | "(" ")"
+      | "false"
+      | "true"
+
+    nonterm ConstrLongident ::=
+      | ConstrExtraNonprefixIdent
+      | ModLongident "(" "::" ")"
+      | ModLongident
+      | "(" "::" ")"
+
+    nonterm PrivateFlag ::=
+      | "private"
+      | epsilon
+
     nonterm ReversedSeparatedNonemptyLlistCommaCoreType ::=
       | ReversedSeparatedNonemptyLlistCommaCoreType "," CoreType
       | CoreType "," CoreType
@@ -375,10 +494,61 @@ include hocc
     nonterm FloatingAttribute ::=
       | "[@@@" AttrId Payload "]"
 
+    nonterm PrimitiveDeclaration ::=
+      | XXX
+
+    nonterm GenericTypeDeclarationNonrecFlagTypeKind ::=
+      | XXX
+
+    nonterm ListGenericAndTypeDeclarationTypeKind ::=
+      | XXX
+
+    nonterm GenericTypeDeclarationNoNonrecFlagTypeSubstKind ::=
+      | XXX
+
+    nonterm ListGenericAndTypeDeclarationTypeSubstKind ::=
+      | XXX
+
+    nonterm ReversedBarLlistExtensionConstructorDeclaration ::=
+      | XXX
+
+    nonterm ModuleDeclarationBody ::=
+      | XXX
+
+    nonterm ModuleSubst ::=
+      | XXX
+
+    nonterm ListAndModuleDeclaration ::=
+      | XXX
+
+    nonterm ModuleTypeDeclaration ::=
+      | XXX
+
+    nonterm ModuleTypeSubst ::=
+      | XXX
+
+    nonterm OpenDescription ::=
+      | XXX
+
     nonterm SignatureItem ::=
       | FloatingAttribute
       | ValueDescription
-      | XXX
+      | PrimitiveDeclaration
+      | GenericTypeDeclarationNonrecFlagTypeKind ListGenericAndTypeDeclarationTypeKind
+      | GenericTypeDeclarationNoNonrecFlagTypeSubstKind ListGenericAndTypeDeclarationTypeSubstKind
+      | "type" ListAttribute TypeParameters TypeLongident "+=" PrivateFlag
+      ReversedBarLlistExtensionConstructorDeclaration ListPostItemAttribute
+      | "type" ListAttribute "nonrec" TypeParameters TypeLongident "+=" PrivateFlag
+      ReversedBarLlistExtensionConstructorDeclaration ListPostItemAttribute
+      | "module" ListAttribute ModuleName ModuleDeclarationBody ListPostItemAttribute
+      | "module" ListAttribute ModuleName "=" ModLongident ListPostItemAttribute
+      | ModuleSubst
+      | "module" ListAttribute "rec" ModuleName ":" ModuleType ListPostItemAttribute
+      ListAndModuleDeclaration
+      | ModuleTypeDeclaration
+      | ModuleTypeSubst
+      | OpenDescription
+      | "include" ListAttribute ModuleType ListPostItemAttribute
 
     nonterm SignatureListElm ::=
       | SignatureItem SignatureListElm
