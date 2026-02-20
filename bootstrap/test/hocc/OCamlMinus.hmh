@@ -90,7 +90,6 @@ hocc
     token LESS "<" prec p_LESS
     token LESSMINUS "<-" prec p_LESSMINUS
     token LET "let" prec p_LET
-    token LETOP
     token LIDENT prec p_LIDENT
     token LPAREN "(" prec p_LPAREN
     token MATCH "match"
@@ -476,7 +475,6 @@ hocc
       | N_subtractive N_expr prec p_prec_unary_minus
       | N_additive N_expr prec p_prec_unary_plus
       | N_let_bindings_ext_ "in" N_seq_expr prec p_IN
-      | LETOP N_letop_bindings "in" N_seq_expr prec p_IN
       | N_expr "::" N_expr prec p_COLONCOLON
       | LIDENT "<-" N_expr prec p_LESSMINUS
       | N_simple_expr "." N_label_longident "<-" N_expr prec p_LESSMINUS
@@ -538,16 +536,6 @@ hocc
 
     nonterm N_and_let_binding ::=
       | "and" N_list_attribute_ N_let_binding_body N_list_post_item_attribute_ prec p_AND
-
-    nonterm N_letop_binding_body ::=
-      | N_val_ident N_strict_binding
-      | N_val_ident
-      | N_simple_pattern ":" N_core_type "=" N_seq_expr prec p_EQUAL
-      | N_pattern_no_exn "=" N_seq_expr prec p_EQUAL
-
-    nonterm N_letop_bindings ::=
-      | N_letop_binding_body
-      | N_letop_bindings ANDOP N_letop_binding_body
 
     nonterm N_fun_binding ::=
       | N_strict_binding
@@ -811,7 +799,6 @@ hocc
 
     nonterm N_operator ::=
       | PREFIXOP prec p_PREFIXOP
-      | LETOP
       | ANDOP
       | "!" prec p_BANG
       | INFIXOP0 prec p_INFIXOP0
