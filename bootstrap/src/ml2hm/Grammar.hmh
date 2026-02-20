@@ -50,12 +50,16 @@ include hocc
     token STAR_OP
     token SLASH_OP
     token PCT_OP
+    token PCT "\%"
     token PLUS_OP
+    token PLUS_DOT "+."
     token MINUS_OP
+    token MINUS_DOT "-."
     token AT_OP
     token CARET_OP
     token DOLLAR_OP
     token LT_OP
+    token LT_MINUS "<-"
     token EQ_OP
     token GT_OP
     token BAR_OP
@@ -119,19 +123,54 @@ include hocc
 
     nonterm PrefixOp ::=
       | TILDE_OP
+      | "~"
       | QMARK_OP
+      | "?"
+
+    nonterm InfixOp4 ::=
+      | STAR_STAR_OP
+
+    nonterm InfixOp3 ::=
+      | STAR_OP
+      | "*"
+      | SLASH_OP
+      | PCT_OP
+      | "\%"
 
     nonterm InfixOp2 ::=
       | MINUS_OP
       | "-"
+      | "-."
       | PLUS_OP
       | "+"
+      | "+."
+      | "+="
+
+    nonterm InfixOp1 ::=
+      | AT_OP
+      | CARET_OP
+
+    nonterm InfixOp0 ::=
+      | BAR_OP
+      | DOLLAR_OP
+      | LT_OP
+      | "<"
+      | "<="
+      | "<>"
+      | EQ_OP
+      | "="
+      | GT_OP
+      | ">="
+      | ">"
+      | BAR_OP
+      | "|"
 
     nonterm XXX ::= epsilon
 
     nonterm Constant ::=
       | LONG
       | CODEPOINT
+      | QSTRING
       | ISTRING
       | R64
 
@@ -206,6 +245,14 @@ include hocc
       | "&&"
       | ":="
 
+    nonterm Subtractive ::=
+      | "-"
+      | "-."
+
+    nonterm Additive ::=
+      | "+"
+      | "+."
+
     nonterm OptionSemi ::=
       | ";"
       | epsilon
@@ -237,8 +284,57 @@ include hocc
       | UIDENT
       | ValExtraIdent
 
-    nonterm Expr ::=
+    nonterm ReversedPrecededOrSeparatedNonemptyLlistBarMatchCase ::=
       | XXX
+
+    nonterm ReversedNonemptyLlistLabeledSimpleExpr ::=
+      | XXX
+
+    nonterm ReversedSeparatedNontrivialLlistCommaExpr ::=
+      | XXX
+
+    nonterm LabeledSimplePattern ::=
+      | XXX
+
+    nonterm FunDef ::=
+      | XXX
+
+    nonterm LetBindingsExt ::=
+      | XXX
+
+    nonterm SimpleExpr ::=
+      | XXX
+
+    nonterm Expr ::=
+      | SimpleExpr
+      | "let" "module" ListAttribute ModuleName ModuleBindingBody "in" SeqExpr
+      | "let" "open" ListAttribute ModuleExpr "in" SeqExpr
+      | "let" "open" "!" ListAttribute ModuleExpr "in" SeqExpr
+      | "function" ListAttribute ReversedPrecededOrSeparatedNonemptyLlistBarMatchCase
+      | "fun" ListAttribute LabeledSimplePattern FunDef
+      | "fun" ListAttribute "(" "type" NonemptyListMkrhsLident ")"
+      | "match" ListAttribute SeqExpr "with" ReversedPrecededOrSeparatedNonemptyLlistBarMatchCase
+      | "if" ListAttribute SeqExpr "then" Expr "else" Expr
+      | "if" ListAttribute SeqExpr "then" Expr
+      | "assert" ListAttribute SimpleExpr
+      | "lazy" ListAttribute SimpleExpr
+      | SimpleExpr ReversedNonemptyLlistLabeledSimpleExpr
+      | ReversedSeparatedNontrivialLlistCommaExpr
+      | ConstrLongident SimpleExpr
+      | Expr InfixOp0 Expr
+      | Expr InfixOp1 Expr
+      | Expr InfixOp2 Expr
+      | Expr InfixOp3 Expr
+      | Expr InfixOp4 Expr
+      | Expr "&&" Expr
+      | Expr ":=" Expr
+      | Subtractive Expr
+      | Additive Expr
+      | LetBindingsExt "in" SeqExpr
+      | Expr "::" Expr
+      | UIDENT "<-" Expr
+      | SimpleExpr "." LabelLongident "<-" Expr
+      | "_"
 
     nonterm SeqExpr ::=
       | Expr ";" SeqExpr
@@ -414,6 +510,11 @@ include hocc
       | "false"
       | "true"
 
+    nonterm ConstrIdent ::=
+      | ConstrExtraNonprefixIdent
+      | "(" "::" ")"
+      | CIDENT
+
     nonterm ConstrLongident ::=
       | ConstrExtraNonprefixIdent
       | ModLongident "(" "::" ")"
@@ -422,6 +523,10 @@ include hocc
 
     nonterm PrivateFlag ::=
       | "private"
+      | epsilon
+
+    nonterm MutableFlag ::=
+      | "mutable"
       | epsilon
 
     nonterm ReversedSeparatedNonemptyLlistCommaCoreType ::=
@@ -494,41 +599,128 @@ include hocc
     nonterm FloatingAttribute ::=
       | "[@@@" AttrId Payload "]"
 
+    nonterm NonemptyListRawString ::=
+      | NonemptyListRawString ISTRING
+      | ISTRING
+
     nonterm PrimitiveDeclaration ::=
-      | XXX
+      | "external" ListAttribute ValIdent ":" PossiblyPolyCoreType "=" NonemptyListRawString
+      ListPostItemAttribute
 
     nonterm GenericTypeDeclarationNonrecFlagTypeKind ::=
-      | XXX
+      | "type" ListAttribute TypeParameters UIDENT TypeKind ListPostItemAttribute
+      | "type" ListAttribute "nonrec" TypeParameters UIDENT TypeKind ListPostItemAttribute
+
+    nonterm ConstructorDeclarations ::=
+      | ReversedBarLlistExtensionConstructorDeclaration
+      | "|"
+
+    nonterm NonemptyTypeKind ::=
+      | CoreType "=" "private" "{" LabelDeclarations "}"
+      | CoreType "=" "{" LabelDeclarations "}"
+      | "private" "{" LabelDeclarations "}"
+      | "{" LabelDeclarations "}"
+      | CoreType "=" "private" ".."
+      | CoreType "=" ".."
+      | "private" ".."
+      | ".."
+      | CoreType "=" "private" ConstructorDeclarations
+      | CoreType "=" ConstructorDeclarations
+      | "private" ConstructorDeclarations
+      | ConstructorDeclarations
+      | "private" CoreType
+      | CoreType
+
+    nonterm TypeKind ::=
+      | "=" NonemptyTypeKind
+      | epsilon
 
     nonterm ListGenericAndTypeDeclarationTypeKind ::=
-      | XXX
+      | "and" ListAttribute TypeParameters UIDENT TypeKind ListPostItemAttribute
+      ListGenericAndTypeDeclarationTypeKind
+      | epsilon
 
     nonterm GenericTypeDeclarationNoNonrecFlagTypeSubstKind ::=
-      | XXX
+      | "type" ListAttribute "nonrec" TypeParameters UIDENT ":=" NonemptyTypeKind
+      ListPostItemAttribute
+      | "type" ListAttribute TypeParameters UIDENT ":=" NonemptyTypeKind ListPostItemAttribute
 
     nonterm ListGenericAndTypeDeclarationTypeSubstKind ::=
-      | XXX
+      | "and" ListAttribute TypeParameters UIDENT ":=" NonemptyTypeKind ListPostItemAttribute
+      ListGenericAndTypeDeclarationTypeSubstKind
+      | epsilon
+
+    nonterm GenericConstructorDeclarationBar ::=
+      | "|" ConstrIdent GeneralizedConstructorArguments ListAttribute
+
+    nonterm ReversedSeparatedNonemptyLlistStarAtomicType ::=
+      | ReversedSeparatedNonemptyLlistStarAtomicType "*" AtomicType
+      | AtomicType
+
+    nonterm PossiblyPolyCoreTypeNoAttr ::=
+      | ReversedNonEmptyLlistTypevar "." AliasType
+
+    nonterm LabelDeclaration ::=
+      | MutableFlag UIDENT ":" PossiblyPolyCoreTypeNoAttr ListAttribute
+
+    nonterm LabelDeclarationSemi ::=
+      | MutableFlag UIDENT ":" PossiblyPolyCoreTypeNoAttr ListAttribute ";" ListAttribute
+
+    nonterm LabelDeclarations ::=
+      | LabelDeclarationSemi LabelDeclarations
+      | LabelDeclarationSemi
+      | LabelDeclaration
+
+    nonterm ConstructorArguments ::=
+      | "{" LabelDeclarations "}"
+      | ReversedSeparatedNonemptyLlistStarAtomicType "*" AtomicType
+      | AtomicType
+
+    nonterm GeneralizedConstructorArguments ::=
+      | ":" ReversedNonEmptyLlistTypevar "." AtomicType
+      | ":" AtomicType
+      | ":" ReversedNonEmptyLlistTypevar "." ConstructorArguments "->" AtomicType
+      | ":" ConstructorArguments "->" AtomicType
+      | "of" ConstructorArguments
+      | epsilon
+
+    nonterm GenericConstructorDeclarationEpsilon ::=
+      | "|" ConstrIdent GeneralizedConstructorArguments ListAttribute
 
     nonterm ReversedBarLlistExtensionConstructorDeclaration ::=
-      | XXX
+      | ReversedBarLlistExtensionConstructorDeclaration GenericConstructorDeclarationBar
+      | GenericConstructorDeclarationBar
+      | GenericConstructorDeclarationEpsilon
 
     nonterm ModuleDeclarationBody ::=
-      | XXX
+      | FunctorArg ModuleDeclarationBody
+      | ":" ModuleType
 
     nonterm ModuleSubst ::=
-      | XXX
+      | "module" ListAttribute CIDENT ":=" ModExtLongident ListPostItemAttribute
 
     nonterm ListAndModuleDeclaration ::=
-      | XXX
+      | "and" ListAttribute ModuleName ":" ModuleType ListPostItemAttribute ListAndModuleDeclaration
+      | epsilon
+
+    nonterm OptionPrecededEqualModuleType ::=
+      | "=" ModuleType
+      | epsilon
 
     nonterm ModuleTypeDeclaration ::=
-      | XXX
+      | "module" "type" ListAttribute Ident OptionPrecededEqualModuleType ListPostItemAttribute
+
+    nonterm ModuleBindingBody ::=
+      | FunctorArg ModuleBindingBody
+      | ":" ModuleType "=" ModuleExpr
+      | "=" ModuleExpr
 
     nonterm ModuleTypeSubst ::=
-      | XXX
+      | "module" "type" ListAttribute Ident ":=" ModuleType ListPostItemAttribute
 
     nonterm OpenDescription ::=
-      | XXX
+      | "open" ListAttribute ModExtLongident ListPostItemAttribute
+      | "open" "!" ListAttribute ModExtLongident ListPostItemAttribute
 
     nonterm SignatureItem ::=
       | FloatingAttribute
