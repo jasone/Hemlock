@@ -29,7 +29,6 @@ include hocc
     token NONREC "nonrec"
     token OF "of"
     token OPEN "open"
-    token OR "or"
     token PRIVATE "private"
     token REC "rec"
     token SIG "sig"
@@ -136,6 +135,7 @@ include hocc
       | SLASH_OP
       | PCT_OP
       | "\%"
+      | "mod"
 
     nonterm InfixOp2 ::=
       | MINUS_OP
@@ -284,26 +284,139 @@ include hocc
       | UIDENT
       | ValExtraIdent
 
+    nonterm MatchCase ::=
+      | Pattern "->" SeqExpr
+      | Pattern "when" SeqExpr "->" SeqExpr
+      | Pattern "->" "."
+
     nonterm ReversedPrecededOrSeparatedNonemptyLlistBarMatchCase ::=
-      | XXX
+      | ReversedPrecededOrSeparatedNonemptyLlistBarMatchCase "|" MatchCase
+      | "|" MatchCase
+      | MatchCase
+
+    nonterm LabeledSimpleExpr ::=
+      | SimpleExpr
+      | TILDE_UIDENT_COLON SimpleExpr
+      | "~" UIDENT
+      | "~" "(" UIDENT TypeConstraint ")"
+      | "?" UIDENT
+      | QMARK_UIDENT_COLON SimpleExpr
 
     nonterm ReversedNonemptyLlistLabeledSimpleExpr ::=
-      | XXX
+      | ReversedNonemptyLlistLabeledSimpleExpr LabeledSimpleExpr
+      | LabeledSimpleExpr
 
     nonterm ReversedSeparatedNontrivialLlistCommaExpr ::=
-      | XXX
+      | ReversedSeparatedNontrivialLlistCommaExpr "," Expr
+      | Expr "," Expr
+
+    nonterm LabelLetPattern ::=
+      | UIDENT ":" CoreType
+      | UIDENT
+
+    nonterm OptionPrecededEqualSeqExpr ::=
+      | "=" SeqExpr
+      | epsilon
+
+    nonterm LetPattern ::=
+      | Pattern ":" CoreType
+      | Pattern
+
+    nonterm PatternVar ::=
+      | UIDENT
+      | "_"
 
     nonterm LabeledSimplePattern ::=
-      | XXX
+      | "?" "(" LabelLetPattern OptionPrecededEqualSeqExpr ")"
+      | "?" UIDENT
+      | QMARK_UIDENT_COLON "(" LetPattern OptionPrecededEqualSeqExpr ")"
+      | QMARK_UIDENT_COLON PatternVar
+      | "~" "(" LabelLetPattern ")"
+      | "~" UIDENT
+      | TILDE_UIDENT_COLON SimplePattern
+      | SimplePattern
 
     nonterm FunDef ::=
-      | XXX
+      | "(" "type" NonemptyListMkrhsLident ")" FunDef
+      | LabeledSimplePattern FunDef
+      | ":" AtomicType "->" SeqExpr
+      | "->" SeqExpr
+
+    nonterm AndLetBinding ::=
+      | "and" ListAttribute LetBindingBody ListPostItemAttribute
+
+    nonterm FunBinding ::=
+      | TypeConstraint "=" SeqExpr
+      | StrictBinding
+
+    nonterm StrictBinding ::=
+      | "=" SeqExpr
+      | LabeledSimplePattern FunBinding
+      | "(" "type" NonemptyListMkrhsLident ")" FunBinding
+
+    nonterm LetBindingBodyNoPunning ::=
+      | ValIdent ":" "type" NonemptyListMkrhsLident "." CoreType "=" SeqExpr
+      | ValIdent ":" ReversedNonEmptyLlistTypevar "." CoreType "=" SeqExpr
+      | ValIdent TypeConstraint "=" SeqExpr
+      | ValIdent StrictBinding
+      | SimplePatternNotIdent ":" CoreType "=" SeqExpr
+      | PatternNoExn "=" SeqExpr
+
+    nonterm LetBindingBody ::=
+      | LetBindingBodyNoPunning
+      | ValIdent
 
     nonterm LetBindingsExt ::=
-      | XXX
+      | LetBindingsExt AndLetBinding
+      | "let" ListAttribute RecFlag LetBindingBody ListPostItemAttribute
+
+    nonterm TypeConstraint ::=
+      | ":" CoreType
+
+    nonterm OptionPrecededEqualExpr ::=
+      | "=" Expr
+      | epsilon
+
+    nonterm SeparatedOrTerminatedNonemptyListSemiRecordExprField ::=
+      | LabelLongident OptionPrecededEqualExpr ";"
+      SeparatedOrTerminatedNonemptyListSemiRecordExprField
+      | LabelLongident OptionPrecededEqualExpr ";"
+      | LabelLongident OptionPrecededEqualExpr
+
+    nonterm RecordExprContent ::=
+      | SimpleExpr "with" SeparatedOrTerminatedNonemptyListSemiRecordExprField
+      | SeparatedOrTerminatedNonemptyListSemiRecordExprField
+
+    nonterm SeparatedOrTerminatedNonemptyListSemiExpr ::=
+      | Expr ";" SeparatedOrTerminatedNonemptyListSemiExpr
+      | Expr ";"
+      | Expr
 
     nonterm SimpleExpr ::=
-      | XXX
+      | "(" SeqExpr ")"
+      | "(" SeqExpr TypeConstraint ")"
+      | "begin" ListAttribute SeqExpr "end"
+      | "begin" ListAttribute "end"
+      | "(" "module" ListAttribute ModuleExpr ")"
+      | "(" "module" ListAttribute ModuleExpr ":" ModuleType ")"
+      | ValLongident
+      | Constant
+      | ConstrLongident
+      | PrefixOp SimpleExpr
+      | "!" SimpleExpr
+      | SimpleExpr "." LabelLongident
+      | ModLongident "." "(" SeqExpr ")"
+      | ModLongident "." "(" ")"
+      | "{" RecordExprContent "}"
+      | ModLongident "." "{" RecordExprContent "}"
+      | "[|" SeparatedOrTerminatedNonemptyListSemiExpr "|]"
+      | "[|" "|]"
+      | ModLongident "." "[|" SeparatedOrTerminatedNonemptyListSemiExpr "|]"
+      | ModLongident "." "[|" "|]"
+      | "[|" SeparatedOrTerminatedNonemptyListSemiExpr "|]"
+      | ModLongident "." "[" SeparatedOrTerminatedNonemptyListSemiExpr "]"
+      | ModLongident "." "[" "]"
+      | ModLongident "." "(" "module" ListAttribute ModuleExpr ":" ModuleType ")"
 
     nonterm Expr ::=
       | SimpleExpr
@@ -344,6 +457,10 @@ include hocc
     nonterm PatternCommaListPattern ::=
       | PatternCommaListPattern "," Pattern
       | Pattern "," Pattern
+
+    nonterm PatternCommaListPatternNoExn ::=
+      | PatternCommaListPatternNoExn "," Pattern
+      | PatternNoExn "," Pattern
 
     nonterm ListxSemiRecordPatFieldUnderscore ::=
       | LabelLongident OptionPrecededColonCoreType OptionPrecededEqualPattern ";"
@@ -399,6 +516,14 @@ include hocc
       | PatternGen
       | Pattern Attribute
       | Pattern "::" Pattern
+
+    nonterm PatternNoExn ::=
+      | PatternNoExn "::" Pattern
+      | PatternNoExn Attribute
+      | PatternGen
+      | PatternNoExn "as" ValIdent
+      | PatternCommaListPatternNoExn
+      | PatternNoExn "|" Pattern
 
     nonterm ModuleName ::=
       | CIDENT
@@ -496,6 +621,10 @@ include hocc
       | ModLongident "." UIDENT
       | UIDENT
 
+    nonterm ValLongident ::=
+      | ModLongident "." ValIdent
+      | ValIdent
+
     nonterm TypeLongident ::=
       | ModExtLongident "." UIDENT
       | UIDENT
@@ -520,6 +649,10 @@ include hocc
       | ModLongident "(" "::" ")"
       | ModLongident
       | "(" "::" ")"
+
+    nonterm RecFlag ::=
+      | "rec"
+      | epsilon
 
     nonterm PrivateFlag ::=
       | "private"
