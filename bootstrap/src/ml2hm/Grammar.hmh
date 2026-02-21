@@ -18,7 +18,6 @@ include hocc
     token FUNCTOR "functor"
     token IF "if"
     token IN "in"
-    token IMPORT "import"
     token INCLUDE "include"
     token LAZY "lazy"
     token LET "let"
@@ -94,7 +93,6 @@ include hocc
     token BAR "|"
     token LARRAY "[|"
     token RARRAY "|]"
-    token BSLASH "\\"
     token TICK "'"
     token AMP_AMP "&&" # OCaml-specefic.
     token XMARK "!"
@@ -164,8 +162,6 @@ include hocc
       | ">"
       | BAR_OP
       | "|"
-
-    nonterm XXX ::= epsilon
 
     nonterm Constant ::=
       | LONG
@@ -882,8 +878,52 @@ include hocc
     nonterm Signature ::=
       | SignatureListElm
 
+    nonterm ExtensionConststructorRebindBar ::=
+      | "|" ConstrIdent "=" ConstrLongident ListAttribute
+
+    nonterm ExtensionConstructorRebindEpsilon ::=
+      | ConstrIdent "=" ConstrLongident ListAttribute
+
+    nonterm ReversedBarLlistExtensionConstructor ::=
+      | GenericConstructorDeclarationEpsilon
+      | ExtensionConstructorRebindEpsilon
+      | GenericConstructorDeclarationBar
+      | ExtensionConststructorRebindBar
+      | ReversedBarLlistExtensionConstructor GenericConstructorDeclarationBar
+      | ReversedBarLlistExtensionConstructor ExtensionConststructorRebindBar
+
+    nonterm ListAndModuleBinding ::=
+      | "and" ListAttribute ModuleName ModuleBindingBody ListPostItemAttribute ListAndModuleBinding
+      | epsilon
+
+    nonterm OpenDeclaration ::=
+      | "open" ListAttribute ModuleExpr ListPostItemAttribute
+      | "open" "!" ListAttribute ModuleExpr ListPostItemAttribute
+
+    nonterm StructureItem ::=
+      | LetBindingsExt
+      | FloatingAttribute
+      | PrimitiveDeclaration
+      | ValueDescription
+      | GenericTypeDeclarationNonrecFlagTypeKind ListGenericAndTypeDeclarationTypeKind
+      | "type" ListAttribute TypeParameters TypeLongident "+=" PrivateFlag
+      ReversedBarLlistExtensionConstructor ListPostItemAttribute
+      | "type" ListAttribute "nonrec" TypeParameters TypeLongident "+=" PrivateFlag
+      ReversedBarLlistExtensionConstructor ListPostItemAttribute
+      | "module" ListAttribute ModuleName ModuleBindingBody ListPostItemAttribute
+      | "module" ListAttribute "rec" ModuleName ModuleBindingBody ListPostItemAttribute
+      ListAndModuleBinding
+      | ModuleTypeDeclaration
+      | OpenDeclaration
+      | "include" ListAttribute ModuleExpr ListPostItemAttribute
+
+    nonterm ListStructureElement ::=
+      | StructureItem ListStructureElement
+      | epsilon
+
     nonterm Structure ::=
-      | XXX
+      | SeqExpr ListPostItemAttribute ListStructureElement
+      | ListStructureElement
 
     start Mli ::=
       | Signature END_OF_INPUT
