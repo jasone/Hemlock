@@ -14,7 +14,7 @@ hocc
     nonassoc p_prec_unary_minus, p_prec_unary_plus < p_prec_constant_constructor
     right p_INFIXOP4 < p_prec_unary_minus
     left p_INFIXOP3, p_PERCENT, p_STAR < p_INFIXOP4
-    left p_INFIXOP2, p_MINUS, p_MINUSDOT, p_PLUS, p_PLUSDOT, p_PLUSEQ < p_INFIXOP3
+    left p_INFIXOP2, p_MINUS, p_MINUSDOT, p_PLUS, p_PLUSDOT < p_INFIXOP3
     right p_COLONCOLON < p_INFIXOP2
     nonassoc p_LBRACKETAT < p_COLONCOLON
     nonassoc p_below_LBRACKETAT < p_LBRACKETAT
@@ -105,7 +105,6 @@ hocc
     token PERCENT "\%" prec p_PERCENT
     token PLUS "+" prec p_PLUS
     token PLUSDOT "+." prec p_PLUSDOT
-    token PLUSEQ "+=" prec p_PLUSEQ
     token PREFIXOP prec p_PREFIXOP
     token PRIVATE "private"
     token QUESTION "?"
@@ -261,20 +260,6 @@ hocc
       | N_generic_constructor_declaration_BAR_
       | N_reversed_bar_llist_constructor_declaration_ N_generic_constructor_declaration_BAR_
 
-    nonterm N_reversed_bar_llist_extension_constructor_ ::=
-      | N_generic_constructor_declaration_epsilon_
-      | N_extension_constructor_rebind_epsilon_
-      | N_generic_constructor_declaration_BAR_
-      | N_extension_constructor_rebind_BAR_
-      | N_reversed_bar_llist_extension_constructor_ N_generic_constructor_declaration_BAR_
-      | N_reversed_bar_llist_extension_constructor_ N_extension_constructor_rebind_BAR_
-
-    nonterm N_reversed_bar_llist_extension_constructor_declaration_ ::=
-      | N_generic_constructor_declaration_epsilon_
-      | N_generic_constructor_declaration_BAR_
-      | N_reversed_bar_llist_extension_constructor_declaration_
-      N_generic_constructor_declaration_BAR_
-
     nonterm N_listx_SEMI_record_pat_field_UNDERSCORE_ ::=
       | N_label_longident N_option_preceded_COLON_core_type__ N_option_preceded_EQUAL_pattern__
       | N_label_longident N_option_preceded_COLON_core_type__ N_option_preceded_EQUAL_pattern__ ";"
@@ -325,11 +310,6 @@ hocc
       | N_value_description
       | N_generic_type_declaration_nonrec_flag_type_kind_
       N_list_generic_and_type_declaration_type_kind__
-      | "type" N_list_attribute_ N_type_parameters N_type_longident "+=" N_private_flag
-      N_reversed_bar_llist_extension_constructor_ N_list_post_item_attribute_ prec p_PLUSEQ
-      | "type" N_list_attribute_ "nonrec" N_type_parameters N_type_longident "+="
-      N_private_flag N_reversed_bar_llist_extension_constructor_ N_list_post_item_attribute_
-      prec p_PLUSEQ
       | "module" N_list_attribute_ N_module_name N_module_binding_body
       N_list_post_item_attribute_
       | "module" N_list_attribute_ "rec" N_module_name N_module_binding_body
@@ -378,12 +358,6 @@ hocc
       N_list_generic_and_type_declaration_type_kind__
       | N_generic_type_declaration_no_nonrec_flag_type_subst_kind_
       N_list_generic_and_type_declaration_type_subst_kind__
-      | "type" N_list_attribute_ N_type_parameters N_type_longident "+=" N_private_flag
-      N_reversed_bar_llist_extension_constructor_declaration_ N_list_post_item_attribute_
-      prec p_PLUSEQ
-      | "type" N_list_attribute_ "nonrec" N_type_parameters N_type_longident "+="
-      N_private_flag N_reversed_bar_llist_extension_constructor_declaration_
-      N_list_post_item_attribute_ prec p_PLUSEQ
       | "module" N_list_attribute_ N_module_name N_module_declaration_body
       N_list_post_item_attribute_
       | "module" N_list_attribute_ N_module_name "=" N_mod_longident
@@ -461,7 +435,6 @@ hocc
       | N_expr INFIXOP4 N_expr prec p_INFIXOP4
       | N_expr "+" N_expr prec p_PLUS
       | N_expr "+." N_expr prec p_PLUSDOT
-      | N_expr "+=" N_expr prec p_PLUSEQ
       | N_expr "-" N_expr prec p_MINUS
       | N_expr "-." N_expr prec p_MINUSDOT
       | N_expr "*" N_expr prec p_STAR
@@ -647,10 +620,6 @@ hocc
       | "private" N_constructor_declarations
       | N_core_type "=" N_constructor_declarations prec p_EQUAL
       | N_core_type "=" "private" N_constructor_declarations
-      | ".."
-      | "private" ".."
-      | N_core_type "=" ".."
-      | N_core_type "=" "private" ".."
       | "{" N_label_declarations "}"
       | "private" "{" N_label_declarations "}"
       | N_core_type "=" "{" N_label_declarations "}"
@@ -719,12 +688,6 @@ hocc
     nonterm N_label_declaration_semi ::=
       | N_mutable_flag LIDENT ":" N_possibly_poly_core_type_no_attr_ N_list_attribute_ ";"
       N_list_attribute_ prec p_SEMI
-
-    nonterm N_extension_constructor_rebind_BAR_ ::=
-      | "|" N_constr_ident "=" N_constr_longident N_list_attribute_ prec p_EQUAL
-
-    nonterm N_extension_constructor_rebind_epsilon_ ::=
-      | N_constr_ident "=" N_constr_longident N_list_attribute_ prec p_EQUAL
 
     nonterm N_with_constraint ::=
       | "type" N_type_parameters N_label_longident N_with_type_binder N_alias_type
@@ -808,7 +771,6 @@ hocc
       | INFIXOP4 prec p_INFIXOP4
       | "+" prec p_PLUS
       | "+." prec p_PLUSDOT
-      | "+=" prec p_PLUSEQ
       | "-" prec p_MINUS
       | "-." prec p_MINUSDOT
       | "*" prec p_STAR
@@ -883,10 +845,6 @@ hocc
     nonterm N_rec_flag ::=
       | epsilon
       | "rec"
-
-    nonterm N_private_flag ::=
-      | epsilon
-      | "private"
 
     nonterm N_mutable_flag ::=
       | epsilon
