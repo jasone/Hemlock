@@ -111,15 +111,25 @@ Comments have two syntaxes.
 
 ### Punctuation
 
-Hemlock uses various symbols as punctuation:
+Hemlock uses various symbols exclusively as punctuation:
 
 ```hemlock
-. .. , ; : :: :=
+. .. , ; : ::
 ( ) (| |) [ ] [| |] { }
+[@ [@@ [@@@
 | \ ' ^ < <= = <> >= >
 ! &
 ~ ?
 -> ~->
+```
+
+Furthermore, select operators serve as punctuation in limited contexts:
+
+```hemlock
+:=
+*
++ -
++=
 ```
 
 ### Operator

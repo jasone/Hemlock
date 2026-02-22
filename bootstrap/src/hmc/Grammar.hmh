@@ -333,6 +333,7 @@ include hocc
     # Punctuation.
     token TILDE "~" of token_simple prec pTildeOp
     token QMARK "?" of token_simple prec pQmarkOp
+    token STAR "*" of token_simple prec pStarOp
     token PLUS "+" of token_simple prec pPlusOp
     token MINUS "-" of token_simple prec pMinusOp
     token LT "<" of token_simple prec pLtOp
@@ -359,6 +360,9 @@ include hocc
     token RCAPTURE "|)" of token_simple
     token LARRAY "[|" of token_simple prec pLgroup
     token RARRAY "|]" of token_simple
+    token LBRACKET_AT "[@" of token_simple
+    token LBRACKET_AT_AT "[@@" of token_simple
+    token LBRACKET_AT_AT_AT "[@@@" of token_simple
     token BSLASH "\\" of token_simple
     token TICK "'" of token_simple
     token CARET "^" of token_simple prec pCaretOp

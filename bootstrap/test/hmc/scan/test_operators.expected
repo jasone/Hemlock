@@ -9,7 +9,7 @@
   (Tok_qmark_op {source=[1:2..1:19); qmark_op="?-+*/\%@^$<=>|:.~?"})
   (Tok_end_of_input {source=[1:19..1:19)})
 ``* *-+*/%@^$<=>|:.~?``
-  (Tok_star_op {source=[1:0..1:1); star_op="*"})
+  (Tok_star {source=[1:0..1:1)})
   (Tok_whitespace {source=[1:1..1:2)})
   (Tok_star_op {source=[1:2..1:19); star_op="*-+*/\%@^$<=>|:.~?"})
   (Tok_end_of_input {source=[1:19..1:19)})

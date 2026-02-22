@@ -149,7 +149,9 @@ module Token : sig
     (* Punctuation. *)
     | Tok_tilde of {source: Source.Slice.t}
     | Tok_qmark of {source: Source.Slice.t}
+    | Tok_star of {source: Source.Slice.t}
     | Tok_plus of {source: Source.Slice.t}
+    | Tok_plus_eq of {source: Source.Slice.t}
     | Tok_minus of {source: Source.Slice.t}
     | Tok_lt of {source: Source.Slice.t}
     | Tok_lt_eq of {source: Source.Slice.t}
@@ -175,6 +177,9 @@ module Token : sig
     | Tok_rcapture of {source: Source.Slice.t}
     | Tok_larray of {source: Source.Slice.t}
     | Tok_rarray of {source: Source.Slice.t}
+    | Tok_lbrack_at of {source: Source.Slice.t}
+    | Tok_lbrack_at_at of {source: Source.Slice.t}
+    | Tok_lbrack_at_at_at of {source: Source.Slice.t}
     | Tok_bslash of {source: Source.Slice.t}
     | Tok_tick of {source: Source.Slice.t}
     | Tok_caret of {source: Source.Slice.t}

@@ -296,7 +296,9 @@ module Token = struct
     (* Punctuation. *)
     | Tok_tilde of {source: Source.Slice.t}
     | Tok_qmark of {source: Source.Slice.t}
+    | Tok_star of {source: Source.Slice.t}
     | Tok_plus of {source: Source.Slice.t}
+    | Tok_plus_eq of {source: Source.Slice.t}
     | Tok_minus of {source: Source.Slice.t}
     | Tok_lt of {source: Source.Slice.t}
     | Tok_lt_eq of {source: Source.Slice.t}
@@ -322,6 +324,9 @@ module Token = struct
     | Tok_rcapture of {source: Source.Slice.t}
     | Tok_larray of {source: Source.Slice.t}
     | Tok_rarray of {source: Source.Slice.t}
+    | Tok_lbrack_at of {source: Source.Slice.t}
+    | Tok_lbrack_at_at of {source: Source.Slice.t}
+    | Tok_lbrack_at_at_at of {source: Source.Slice.t}
     | Tok_bslash of {source: Source.Slice.t}
     | Tok_tick of {source: Source.Slice.t}
     | Tok_caret of {source: Source.Slice.t}
@@ -616,8 +621,12 @@ module Token = struct
         formatter |> Fmt.fmt "Tok_tilde {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_qmark {source} ->
         formatter |> Fmt.fmt "Tok_qmark {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_star {source} ->
+        formatter |> Fmt.fmt "Tok_star {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_plus {source} ->
         formatter |> Fmt.fmt "Tok_plus {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_plus_eq {source} ->
+        formatter |> Fmt.fmt "Tok_plus_eq {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_minus {source} ->
         formatter |> Fmt.fmt "Tok_minus {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_lt {source} ->
@@ -668,6 +677,12 @@ module Token = struct
         formatter |> Fmt.fmt "Tok_larray {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_rarray {source} ->
         formatter |> Fmt.fmt "Tok_rarray {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lbrack_at {source} ->
+        formatter |> Fmt.fmt "Tok_lbrack_at {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lbrack_at_at {source} ->
+        formatter |> Fmt.fmt "Tok_lbrack_at_at {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lbrack_at_at_at {source} ->
+        formatter |> Fmt.fmt "Tok_lbrack_at_at_at {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_bslash {source} ->
         formatter |> Fmt.fmt "Tok_bslash {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_tick {source} ->
@@ -1123,7 +1138,9 @@ module Token = struct
     | Tok_dot_op {source; _}
     | Tok_tilde {source}
     | Tok_qmark {source}
+    | Tok_star {source}
     | Tok_plus {source}
+    | Tok_plus_eq {source}
     | Tok_minus {source}
     | Tok_lt {source}
     | Tok_lt_eq {source}
@@ -1149,6 +1166,9 @@ module Token = struct
     | Tok_rcapture {source}
     | Tok_larray {source}
     | Tok_rarray {source}
+    | Tok_lbrack_at {source}
+    | Tok_lbrack_at_at {source}
+    | Tok_lbrack_at_at_at {source}
     | Tok_bslash {source}
     | Tok_tick {source}
     | Tok_caret {source}
@@ -1230,12 +1250,13 @@ module Token = struct
     | Tok_pct_op _ | Tok_plus_op _ | Tok_minus_op _ | Tok_at_op _ | Tok_caret_op _ | Tok_dollar_op _
     | Tok_lt_op _ | Tok_eq_op _ | Tok_gt_op _ | Tok_bar_op _ | Tok_colon_op _ | Tok_dot_op _
     (* Punctuation. *)
-    | Tok_tilde _ | Tok_qmark _ | Tok_plus _ | Tok_minus _ | Tok_lt _ | Tok_lt_eq _ | Tok_eq _
-    | Tok_lt_gt _ | Tok_gt_eq _ | Tok_gt _ | Tok_comma _ | Tok_dot _ | Tok_dot_dot _ | Tok_semi _
-    | Tok_colon _ | Tok_colon_colon _ | Tok_colon_eq _ | Tok_lparen _ | Tok_rparen _ | Tok_lbrack _
-    | Tok_rbrack _ | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_lcapture _ | Tok_rcapture _
-    | Tok_larray _ | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _
-    | Tok_amp_amp _ | Tok_xmark _ | Tok_arrow _ | Tok_carrow _
+    | Tok_tilde _ | Tok_qmark _ | Tok_star _ | Tok_plus _ | Tok_plus_eq _ | Tok_minus _ | Tok_lt _
+    | Tok_lt_eq _ | Tok_eq _ | Tok_lt_gt _ | Tok_gt_eq _ | Tok_gt _ | Tok_comma _ | Tok_dot _
+    | Tok_dot_dot _ | Tok_semi _ | Tok_colon _ | Tok_colon_colon _ | Tok_colon_eq _ | Tok_lparen _
+    | Tok_rparen _ | Tok_lbrack _ | Tok_rbrack _ | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _
+    | Tok_lcapture _ | Tok_rcapture _ | Tok_larray _ | Tok_rarray _ | Tok_lbrack_at _
+    | Tok_lbrack_at_at _ | Tok_lbrack_at_at_at _ | Tok_bslash _ | Tok_tick _ | Tok_caret _
+    | Tok_amp _ | Tok_amp_amp _ | Tok_xmark _ | Tok_arrow _ | Tok_carrow _
     (* Composite *)
     | Tok_tilde_uident_colon {uident=(Constant _); _}
     | Tok_qmark_uident_colon {uident=(Constant _); _}
@@ -1546,8 +1567,8 @@ let in_fstring {fstring_states; _} =
 let malformation ~base ~past description =
   Token.Rendition.Malformation.of_cursors ~base ~past ~description
 
-let malformation_incl View.{cursor; _} t description =
-  malformation ~base:t.tok_base ~past:cursor description
+let malformation_incl View.{cursor; _} {tok_base; _} description =
+  malformation ~base:tok_base ~past:cursor description
 
 let malformed malformation =
   Token.Rendition.of_mals [malformation]
@@ -2731,6 +2752,8 @@ module State = struct
     | State_start
     | State_lparen
     | State_lbrack
+    | State_lbrack_at
+    | State_lbrack_at_at
     | State_amp
     | State_tilde
     | State_qmark
@@ -2875,6 +2898,8 @@ module State = struct
     | State_start -> formatter |> Fmt.fmt "State_start"
     | State_lparen -> formatter |> Fmt.fmt "State_lparen"
     | State_lbrack -> formatter |> Fmt.fmt "State_lbrack"
+    | State_lbrack_at -> formatter |> Fmt.fmt "State_lbrack_at"
+    | State_lbrack_at_at -> formatter |> Fmt.fmt "State_lbrack_at_at"
     | State_amp -> formatter |> Fmt.fmt "State_amp"
     | State_tilde -> formatter |> Fmt.fmt "State_tilde"
     | State_qmark -> formatter |> Fmt.fmt "State_qmark"
@@ -3055,14 +3080,14 @@ module State = struct
     | State_fstring_sep_seen_start -> formatter |> Fmt.fmt "State_fstring_sep_seen_start"
     | State_fstring_lparen -> formatter |> Fmt.fmt "State_fstring_lparen"
 
-  let start_of_t t =
-    match t.line_state, in_fstring t with
+  let start_of_y ({line_state; fstring_states; _} as y) =
+    match line_state, in_fstring y with
     | Line_begin, _
     | Line_whitespace, _
     | Line_start_col _, _ -> Some State_dentation_start
     | Line_body, false -> Some State_start
     | Line_body, true -> begin
-        match List.hd t.fstring_states with
+        match List.hd fstring_states with
         | Fstring_spec_pct_seen [] -> Some State_fstring_pct_seen_start
         | Fstring_spec_pct_seen (_ :: _) -> None
         | Fstring_spec_pad_seen -> Some State_fstring_pad_seen_start
@@ -3276,7 +3301,7 @@ module Dfa = struct
   let retry_fstring_eoi y =
     let rec f y = begin
       let y' = fstring_pop y in
-      match State.start_of_t y' with
+      match State.start_of_y y' with
       | Some state' -> y', Retry state'
       | None -> f y'
     end in
@@ -3361,15 +3386,6 @@ module Dfa = struct
     eoi0=(fun view y -> accept_tok_incl (Tok_lparen {source=source_incl view y}) view y);
   }
 
-  let node0_lbrack = {
-    edges0=map_of_cps_alist [
-      ("|", fun view y -> accept_tok_incl (Tok_larray {source=source_incl view y}) view y);
-      (":", advance State_src_directive_colon);
-    ];
-    default0=(fun view y -> accept_tok_excl (Tok_lbrack {source=source_excl view y}) view y);
-    eoi0=(fun view y -> accept_tok_incl (Tok_lbrack {source=source_incl view y}) view y);
-  }
-
   let node0_amp = {
     edges0=map_of_cps_alist [
       ("&", fun view y -> accept_tok_incl (Tok_amp_amp {source=source_incl view y}) view y);
@@ -3401,9 +3417,9 @@ module Dfa = struct
         advance State_operator_star);
     ];
     default0=(fun view y ->
-      accept_tok_excl (Tok_star_op {source=source_excl view y; star_op="*"}) view y);
+      accept_tok_excl (Tok_star {source=source_excl view y}) view y);
     eoi0=(fun view y ->
-      accept_tok_incl (Tok_star_op {source=source_incl view y; star_op="*"}) view y);
+      accept_tok_incl (Tok_star {source=source_incl view y}) view y);
   }
 
   let node0_bar = {
@@ -4694,7 +4710,9 @@ module Dfa = struct
         | ":=" -> Tok_colon_eq {source}
         | "." -> Tok_dot {source}
         | ".." -> Tok_dot_dot {source}
+        (* `*` is specially handled elsewhere due to `*...` vs `**...` complexities. *)
         | "+" -> Tok_plus {source}
+        | "+=" -> Tok_plus_eq {source}
         | "-" -> Tok_minus {source}
         | "^" -> Tok_caret {source}
         | "<" -> Tok_lt {source}
@@ -4815,6 +4833,34 @@ module Dfa = struct
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_dot)];
       default0=accept_operator_excl (fun source s -> Tok_dot_op {source; dot_op=s});
       eoi0=accept_operator_incl (fun source s -> Tok_dot_op {source; dot_op=s});
+    }
+  end
+
+  module Lbrack = struct
+    let node0_lbrack = {
+      edges0=map_of_cps_alist [
+        ("|", fun view y -> accept_tok_incl (Tok_larray {source=source_incl view y}) view y);
+        (":", advance State_src_directive_colon);
+        ("@", advance State_lbrack_at);
+      ];
+      default0=(fun view y -> accept_tok_excl (Tok_lbrack {source=source_excl view y}) view y);
+      eoi0=(fun view y -> accept_tok_incl (Tok_lbrack {source=source_incl view y}) view y);
+    }
+
+    let node0_lbrack_at = {
+      edges0=map_of_cps_alist [
+        ("@", advance State_lbrack_at_at);
+      ];
+      default0=(fun view y -> accept_tok_excl (Tok_lbrack_at {source=source_excl view y}) view y);
+      eoi0=(fun view y -> accept_tok_incl (Tok_lbrack_at {source=source_incl view y}) view y);
+    }
+
+    let node0_lbrack_at_at = {
+      edges0=map_of_cps_alist [
+      ("@", (fun view y -> accept_tok_incl (Tok_lbrack_at_at_at {source=source_incl view y}) view y));
+      ];
+      default0=(fun view y -> accept_tok_excl (Tok_lbrack_at_at {source=source_excl view y}) view y);
+      eoi0=(fun view y -> accept_tok_incl (Tok_lbrack_at_at {source=source_incl view y}) view y);
     }
   end
 
@@ -7127,7 +7173,9 @@ module Dfa = struct
     match state with
     | State.State_start -> act0 trace node0_start view y
     | State_lparen -> act0 trace node0_lparen view y
-    | State_lbrack -> act0 trace node0_lbrack view y
+    | State_lbrack -> act0 trace Lbrack.node0_lbrack view y
+    | State_lbrack_at -> act0 trace Lbrack.node0_lbrack_at view y
+    | State_lbrack_at_at -> act0 trace Lbrack.node0_lbrack_at_at view y
     | State_amp -> act0 trace node0_amp view y
     | State_tilde -> act0 trace node0_tilde view y
     | State_qmark -> act0 trace node0_qmark view y
@@ -7318,7 +7366,7 @@ let pp {y; _} formatter =
 let rec next_impl y =
   let trace = None in
   let _trace = Some true in
-  let y, token = match State.start_of_t y with
+  let y, token = match State.start_of_y y with
     | Some start -> Dfa.next ?trace start y
     | None -> begin
         match List.hd y.fstring_states with
