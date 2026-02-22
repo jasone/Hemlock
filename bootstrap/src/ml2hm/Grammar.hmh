@@ -57,7 +57,6 @@ include hocc
 
     token PLUS_OP
     token PLUS "+"
-    token PLUS_EQ "+="
     token PLUS_DOT "+."
 
     token MINUS_OP
@@ -111,15 +110,15 @@ include hocc
     token RCURLY "}"
     token LARRAY "[|"
     token RARRAY "|]"
+    token LBRACKET_AT "[@"
+    token LBRACKET_AT_AT "[@@"
+    token LBRACKET_AT_AT_AT "[@@@"
     token TICK "'"
     token XMARK "!"
 
     # Composite.
     token TILDE_UIDENT_COLON "~label:"
     token QMARK_UIDENT_COLON "?label:"
-    token LBRACKET_AT "[@"
-    token LBRACKET_AT_AT "[@@"
-    token LBRACKET_AT_AT_AT "[@@@"
 
     # Miscellaneous.
     token WHITESPACE
@@ -158,7 +157,6 @@ include hocc
       | PLUS_OP
       | "+"
       | "+."
-      | "+="
 
     nonterm InfixOp1 ::=
       | AT_OP
@@ -661,10 +659,6 @@ include hocc
       | "rec"
       | epsilon
 
-    nonterm PrivateFlag ::=
-      | "private"
-      | epsilon
-
     nonterm MutableFlag ::=
       | "mutable"
       | epsilon
@@ -760,10 +754,6 @@ include hocc
       | CoreType "=" "{" LabelDeclarations "}"
       | "private" "{" LabelDeclarations "}"
       | "{" LabelDeclarations "}"
-      | CoreType "=" "private" ".."
-      | CoreType "=" ".."
-      | "private" ".."
-      | ".."
       | CoreType "=" "private" ConstructorDeclarations
       | CoreType "=" ConstructorDeclarations
       | "private" ConstructorDeclarations
@@ -854,10 +844,6 @@ include hocc
       | PrimitiveDeclaration
       | GenericTypeDeclarationNonrecFlagTypeKind GenericAndTypeDeclarationTypeKindList
       | GenericTypeDeclarationNoNonrecFlagTypeSubstKind GenericAndTypeDeclarationTypeSubstKindList
-      | "type" AttributeList TypeParameters TypeLongident "+=" PrivateFlag
-      ConstructorDeclarationList PostItemAttributeList
-      | "type" AttributeList "nonrec" TypeParameters TypeLongident "+=" PrivateFlag
-      ConstructorDeclarationList PostItemAttributeList
       | "module" AttributeList ModuleName ModuleDeclarationBody PostItemAttributeList
       | "module" AttributeList ModuleName "=" ModLongident PostItemAttributeList
       | "module" AttributeList CIDENT ":=" ModExtLongident PostItemAttributeList
@@ -873,20 +859,6 @@ include hocc
       | SignatureItem Signature
       | epsilon
 
-    nonterm ExtensionConststructorRebindBar ::=
-      | "|" ConstrIdent "=" ConstrLongident AttributeList
-
-    nonterm ExtensionConstructorRebindEpsilon ::=
-      | ConstrIdent "=" ConstrLongident AttributeList
-
-    nonterm ExtensionConstructorList ::=
-      | ExtensionConstructorList GenericConstructorDeclarationBar
-      | ExtensionConstructorList ExtensionConststructorRebindBar
-      | GenericConstructorDeclarationBar
-      | ExtensionConststructorRebindBar
-      | GenericConstructorDeclarationEpsilon
-      | ExtensionConstructorRebindEpsilon
-
     nonterm AndModuleBindingList ::=
       | "and" AttributeList ModuleName ModuleBindingBody PostItemAttributeList AndModuleBindingList
       | epsilon
@@ -897,10 +869,6 @@ include hocc
       | PrimitiveDeclaration
       | ValueDescription
       | GenericTypeDeclarationNonrecFlagTypeKind GenericAndTypeDeclarationTypeKindList
-      | "type" AttributeList TypeParameters TypeLongident "+=" PrivateFlag
-      ExtensionConstructorList PostItemAttributeList
-      | "type" AttributeList "nonrec" TypeParameters TypeLongident "+=" PrivateFlag
-      ExtensionConstructorList PostItemAttributeList
       | "module" AttributeList ModuleName ModuleBindingBody PostItemAttributeList
       | "module" AttributeList "rec" ModuleName ModuleBindingBody PostItemAttributeList
       AndModuleBindingList
