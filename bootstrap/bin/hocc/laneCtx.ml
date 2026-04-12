@@ -253,6 +253,14 @@ let kernel_attribs {traces; _} =
       ) kernel_isuccs
     ) traces
 
+let filter_useless_traces cs_syms_useful ({traces; _} as t) =
+  let traces = Ordmap.filter ~f:(fun (TraceKey.{conflict_state_index; symbol_index; _}, _v) ->
+    match Ordmap.get conflict_state_index cs_syms_useful with
+    | None -> false
+    | Some syms -> Bitset.mem symbol_index syms
+  ) traces in
+  {t with traces}
+
 let of_conflict_state ~resolve symbols prods leftmost_cache conflict_state =
   let traces, leftmost_cache = Attribs.fold
       ~init:(Ordmap.empty (module TraceKey), leftmost_cache)

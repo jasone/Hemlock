@@ -81,3 +81,7 @@ val diff: t -> t -> t
 val kernel_attribs: t -> KernelAttribs.t
 (** [kernel_attribs t] returns a map of conflict attributions attributable to the lane(s)
     encompassing [t]'s transit. *)
+
+val filter_useless_traces: (State.Index.t, Bitset.t, State.Index.cmper_witness) Ordmap.t -> t -> t
+(** [filter_useless_traces cs_syms_useful t] returns a filtered version of [t] with attributions
+    only on (conflict state, symbol) pairs that are present in [cs_syms_useful] preserved. *)
