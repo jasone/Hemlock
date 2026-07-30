@@ -190,6 +190,18 @@ module type SOrdMono = sig
   val nth: uns -> t -> elm
   (** [nth i t] returns the nth set element (0-indexed), or halts if [i] is out of bounds. *)
 
+  val min_opt: t -> elm option
+  (** [min_opt t] returns the minimum set element, or [None] if [t] is empty. *)
+
+  val min: t -> elm
+  (** [min t] returns the minimum set element, or halts if [t] is empty. *)
+
+  val max_opt: t -> elm option
+  (** [max_opt t] returns the maximum set element, or [None] if [t] is empty. *)
+
+  val max: t -> elm
+  (** [max t] returns the maximum set element, or halts if [t] is empty. *)
+
   val psearch: elm -> t -> (Cmp.t * uns) option
   (** [psearch a t] searches for [a] in [t], and falls back to the nearest present predecessor of
       [a] in the case of no match.
@@ -478,6 +490,18 @@ module type SOrdPoly = sig
 
   val nth: uns -> ('a, 'cmp) t -> 'a
   (** [nth i t] returns the nth set element (0-indexed), or halts if [i] is out of bounds. *)
+
+  val min_opt: ('a, 'cmp) t -> 'a option
+  (** [min_opt t] returns the minimum set element, or [None] if [t] is empty. *)
+
+  val min: ('a, 'cmp) t -> 'a
+  (** [min t] returns the minimum set element, or halts if [t] is empty. *)
+
+  val max_opt: ('a, 'cmp) t -> 'a option
+  (** [max_opt t] returns the maximum set element, or [None] if [t] is empty. *)
+
+  val max: ('a, 'cmp) t -> 'a
+  (** [max t] returns the maximum set element, or halts if [t] is empty. *)
 
   val psearch: 'a -> ('a, 'cmp) t -> (Cmp.t * uns) option
   (** [psearch a t] searches for [a] in [t], and falls back to the nearest present predecessor of

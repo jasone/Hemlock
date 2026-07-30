@@ -1,3 +1,5 @@
+open Rudiments0
+
 module T = struct
   type ('a, 'cmp) t = ('a, unit, 'cmp) Ordmap.t
   type 'a elm = 'a
@@ -49,6 +51,27 @@ let nth_opt i t =
 let nth i t =
   let a, _ = Ordmap.nth i t in
   a
+
+let min_opt t =
+  nth_opt 0L t
+
+let min t =
+  match is_empty t with
+  | false -> nth 0L t
+  | true -> halt "Empty set"
+
+let max_index t =
+  Uns.pred (length t)
+
+let max_opt t =
+  match is_empty t with
+  | false -> Some (nth (max_index t) t)
+  | true -> None
+
+let max t =
+  match is_empty t with
+  | false -> nth (max_index t) t
+  | true -> halt "Empty set"
 
 let psearch = Ordmap.psearch
 

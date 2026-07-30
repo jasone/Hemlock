@@ -295,6 +295,18 @@ module type SOrd = sig
   val nth: uns -> ('k, 'v, 'cmp) t -> ('k * 'v)
   (** [nth i t] returns the nth map mapping (0-indexed), or halts if [i] is out of bounds. *)
 
+  val min_opt: ('k, 'v, 'cmp) t -> ('k * 'v) option
+  (** [min_opt t] returns the minimum mapping, or [None] if [t] is empty. *)
+
+  val min: ('k, 'v, 'cmp) t -> ('k * 'v)
+  (** [min t] returns the minimum mapping, or halts if [t] is empty. *)
+
+  val max_opt: ('k, 'v, 'cmp) t -> ('k * 'v) option
+  (** [max_opt t] returns the maximum mapping, or [None] if [t] is empty. *)
+
+  val max: ('k, 'v, 'cmp) t -> ('k * 'v)
+  (** [max t] returns the maximum mapping, or halts if [t] is empty. *)
+
   val psearch: 'k -> ('k, 'v, 'cmp) t -> (Cmp.t * uns) option
   (** [psearch k t] searches for [k] in [t], and falls back to the nearest present predecessor of
       [k] in the case of no match.

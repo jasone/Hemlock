@@ -24,7 +24,7 @@ let push elm {q; set} =
   let k = match Ordmap.length q with
     | 0L -> I64.zero
     | _ -> begin
-        let kmin, _elm = Ordmap.nth 0L q in
+        let kmin, _elm = Ordmap.min q in
         I64.pred kmin
       end
   in
@@ -35,10 +35,10 @@ let push elm {q; set} =
 
 let push_back elm {q; set} =
   assert (not (Set.mem elm set));
-  let k = match Ordmap.length q with
-    | 0L -> I64.zero
-    | l -> begin
-        let kmax, _elm = Ordmap.nth (pred l) q in
+  let k = match Ordmap.is_empty q with
+    | true -> I64.zero
+    | false -> begin
+        let kmax, _elm = Ordmap.max q in
         I64.succ kmax
       end
   in
@@ -48,7 +48,7 @@ let push_back elm {q; set} =
   }
 
 let pop {q; set} =
-  let k, elm = Ordmap.nth 0L q in
+  let k, elm = Ordmap.min q in
   let q' = Ordmap.remove_hlt k q in
   let set' = Set.remove elm set in
   elm, {q=q'; set=set'}

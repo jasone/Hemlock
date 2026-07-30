@@ -34,7 +34,7 @@
   test_partition_tf
   test_partitioni_tf
   test_reduce
-  test_search_nth
+  test_search_nth_min_max
   test_stress
   test_stress2
   test_union)

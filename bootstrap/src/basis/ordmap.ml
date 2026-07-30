@@ -420,6 +420,27 @@ let nth i t =
   | None -> halt "Out of bounds"
   | Some (k, v) -> k, v
 
+let min_opt t =
+  nth_opt 0L t
+
+let min t =
+  match is_empty t with
+  | false -> nth 0L t
+  | true -> halt "Empty map"
+
+let max_index t =
+  Uns.pred (length t)
+
+let max_opt t =
+  match is_empty t with
+  | false -> Some (nth (max_index t) t)
+  | true -> None
+
+let max t =
+  match is_empty t with
+  | false -> nth (max_index t) t
+  | true -> halt "Empty map"
+
 let search_impl a cmper mode node =
   let open Cmper in
   let open Cmp in
@@ -577,7 +598,7 @@ let join l kv r =
     let ll, l_kv, lr = expose l in
     match (height lr) <= (height r) + 1L with
     | true -> begin
-        match (max (height lr) (height r)) <= (height ll) with
+        match (Uns.max (height lr) (height r)) <= (height ll) with
         | true -> node_init ll l_kv (node_init lr kv r)
         | false -> begin
             let n0, lr_kv, n1 = expose lr in
@@ -598,7 +619,7 @@ let join l kv r =
     let rl, r_kv, rr = expose r in
     match (height rl) <= (height l) + 1L with
     | true -> begin
-        match (max (height l) (height rl)) <= (height rr) with
+        match (Uns.max (height l) (height rl)) <= (height rr) with
         | true -> node_init (node_init l kv rl) r_kv rr
         | false -> begin
             let n0, rl_kv, n1 = expose rl in
@@ -1406,8 +1427,8 @@ let validate t =
         assert (n = (nnodes l) + 1L + (nnodes r));
         let lh = height l in
         let rh = height r in
-        assert (h = succ (max lh rh));
-        assert ((max lh rh) - (min lh rh) < 2L);
+        assert (h = succ (Uns.max lh rh));
+        assert ((Uns.max lh rh) - (Uns.min lh rh) < 2L);
       end
   in
   fn t.root

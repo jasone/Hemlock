@@ -176,6 +176,27 @@ module T = struct
     | true -> Some (nth_nonempty i t)
     | false -> None
 
+  let min_opt t =
+    nth_opt 0L t
+
+  let min t =
+    match is_empty t with
+    | false -> nth 0L t
+    | true -> halt "Empty set"
+
+  let max_index t =
+    Uns.pred (length t)
+
+  let max_opt t =
+    match is_empty t with
+    | false -> Some (nth (max_index t) t)
+    | true -> None
+
+  let max t =
+    match is_empty t with
+    | false -> nth (max_index t) t
+    | true -> halt "Empty set"
+
   module Cursor = struct
     module T = struct
       type container = t

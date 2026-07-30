@@ -4,11 +4,37 @@ open! OrdmapTest
 open Ordmap
 
 let test () =
-  let test_search ordmap (key_max:uns) = begin
+  let test_min_max ordmap = begin
     File.Fmt.stdout
-    |> (fmt_internals Uns.pp) ordmap
+    |> Fmt.fmt "  min_opt -> "
+    |> Option.pp (pp_kv_pair Uns.pp) (min_opt ordmap)
     |> Fmt.fmt "\n"
-    |> ignore;
+    |> (fun formatter ->
+      match is_empty ordmap with
+      | false -> begin
+          formatter
+          |> Fmt.fmt "  min -> "
+          |> (pp_kv_pair Uns.pp) (min ordmap)
+          |> Fmt.fmt "\n"
+        end
+      | true -> formatter
+    )
+    |> Fmt.fmt "  max_opt -> "
+    |> Option.pp (pp_kv_pair Uns.pp) (max_opt ordmap)
+    |> Fmt.fmt "\n"
+    |> (fun formatter ->
+      match is_empty ordmap with
+      | false -> begin
+          formatter
+          |> Fmt.fmt "  max -> "
+          |> (pp_kv_pair Uns.pp) (max ordmap)
+          |> Fmt.fmt "\n"
+        end
+      | true -> formatter
+    )
+    |> ignore
+  end in
+  let test_search ordmap (key_max:uns) = begin
     Range.Uns.iter (0L =:= key_max) ~f:(fun probe ->
       let open Cmp in
       File.Fmt.stdout
@@ -57,6 +83,11 @@ let test () =
     let ordmap = of_array (module Uns)
       (Array.init (0L =:< len) ~f:(fun i -> let k = (i * 2L + 1L) in k, k * 10L)) in
     let key_max = len * 2L in
+    File.Fmt.stdout
+    |> (fmt_internals Uns.pp) ordmap
+    |> Fmt.fmt "\n"
+    |> ignore;
+    let () = test_min_max ordmap in
     test_search ordmap key_max
   )
 

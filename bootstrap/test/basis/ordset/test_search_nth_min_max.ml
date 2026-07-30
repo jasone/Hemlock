@@ -3,11 +3,37 @@ open! Basis
 open Ordset
 
 let test () =
-  let test_search ordset key_max = begin
+  let test_min_max ordset = begin
     File.Fmt.stdout
-    |> fmt ordset
+    |> Fmt.fmt "  min_opt -> "
+    |> Option.pp Uns.pp (min_opt ordset)
     |> Fmt.fmt "\n"
-    |> ignore;
+    |> (fun formatter ->
+      match is_empty ordset with
+      | false -> begin
+          formatter
+          |> Fmt.fmt "  min -> "
+          |> Uns.pp (min ordset)
+          |> Fmt.fmt "\n"
+        end
+      | true -> formatter
+    )
+    |> Fmt.fmt "  max_opt -> "
+    |> Option.pp Uns.pp (max_opt ordset)
+    |> Fmt.fmt "\n"
+    |> (fun formatter ->
+      match is_empty ordset with
+      | false -> begin
+          formatter
+          |> Fmt.fmt "  max -> "
+          |> Uns.pp (max ordset)
+          |> Fmt.fmt "\n"
+        end
+      | true -> formatter
+    )
+    |> ignore
+  end in
+  let test_search ordset key_max = begin
     Range.Uns.iter (0L =:= key_max) ~f:(fun probe ->
       File.Fmt.stdout
       |> Fmt.fmt "  "
@@ -49,6 +75,11 @@ let test () =
     let ordset = of_array (module Uns)
       (Array.init (0L =:< len) ~f:(fun i -> i * 2L + 1L)) in
     let key_max = len * 2L in
+    File.Fmt.stdout
+    |> fmt ordset
+    |> Fmt.fmt "\n"
+    |> ignore;
+    let () = test_min_max ordset in
     test_search ordset key_max
   )
 
