@@ -15375,6 +15375,70 @@ let pp_expect expect formatter =
       |> Fmt.fmt (String.join ~sep:"⸱" names)
       |> Fmt.fmt "⸱}"
 
+module Revision = struct
+    module T = struct
+        type t =
+          | Insert of Token.t
+          | Feed
+          | Delete
+
+        let index_of_t t =
+            match t with
+              | Insert _ -> 0L
+              | Feed -> 1L
+              | Delete -> 2L
+
+        let hash_fold t state =
+            state
+              |> Uns.hash_fold (index_of_t t)
+              |> (fun state ->
+                match t with
+                  | Insert token -> state |> Token.hash_fold token
+                  | Feed
+                  | Delete -> state
+              )
+
+        let cmp t0 t1 =
+            let open Cmp in
+            match Uns.cmp (index_of_t t0) (index_of_t t1) with
+              | Lt -> Lt
+              | Eq -> begin
+                match t0, t1 with
+                  | Insert token0, Insert token1 -> Token.cmp token0 token1
+                  | _ -> Eq
+              end
+              | Gt -> Gt
+
+        let pp t formatter =
+            match t with
+              | Insert token -> formatter |> Fmt.fmt "Insert " |> Token.pp token
+              | Feed -> formatter |> Fmt.fmt "Feed"
+              | Delete -> formatter |> Fmt.fmt "Delete"
+      end
+    include T
+    include Identifiable.Make(T)
+  end
+
+module Repair = struct
+    module T = struct
+        type t = Revision.t array
+
+        let hash_fold t state =
+            state |> Array.hash_fold Revision.hash_fold t
+
+        let cmp t0 t1 =
+            Array.cmp Revision.cmp t0 t1
+
+        let pp t formatter =
+            formatter |> Array.pp Revision.pp t
+      end
+    include T
+    include Identifiable.Make(T)
+  end
+
+let repairs ~get_token:_XXX _XXXa _XXXt =
+  Ordset.empty (module Repair) (* XXX *)
+
 let hmhi scanner =
     let rec inner scanner errs parser = begin
         let scanner, scan_token, token, mals = scan scanner in
